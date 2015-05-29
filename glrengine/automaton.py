@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from glrengine.normalizer import morph_parser
-from glrengine.labels import LABELS_CHECK
+from normalizer import morph_parser
+from labels import LABELS_CHECK
 from parser import Parser
 from itertools import ifilter, chain
 from stack import Stack
