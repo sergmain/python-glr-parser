@@ -57,9 +57,9 @@ class GLRParser(object):
         self.splitter = GLRSplitter()
         self.scanner = GLRScanner(**parser_rules)
         self.glr = GLRAutomaton(
-            start_sym=root,
             grammar=grammar_rules,
             scanner=self.scanner,
+            start_sym=root,
             debug=debug
         )
 

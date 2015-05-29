@@ -14,8 +14,8 @@ class GLRAutomaton(Parser):
         A GLR parser.
     """
 
-    def __init__(self, start_sym, grammar, scanner, dictionaries=None, debug=False):
-        Parser.__init__(self, start_sym, grammar, scanner.tokens.keys())
+    def __init__(self, grammar, scanner, start_sym='S', dictionaries=None, debug=False):
+        Parser.__init__(self, grammar, scanner.tokens.keys(), start_sym)
         self.scanner = scanner
         self.dictionaries = dictionaries or {}
         self.results = []

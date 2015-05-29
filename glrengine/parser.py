@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from itertools import izip, chain
-from rules import make_rules, RuleSet
+from rules import RuleSet
 from lr import *
 
 
 class Parser(object):
-    def __init__(self, start_sym, grammar, scanner_kw=[]):
+    def __init__(self, grammar, scanner_kw=[], start_sym='S'):
         self.kw_set = set(scanner_kw)
         self.kw_set.add('$')
-        self.R = RuleSet(make_rules(start_sym, grammar, self.kw_set))
+        self.R = RuleSet(grammar, self.kw_set, start_sym)
         self.I = set((r, i) for r in xrange(self.R.rules_count)
                      for i in xrange(len(self.R[r][1]) + 1))
         self.precompute_next_items()

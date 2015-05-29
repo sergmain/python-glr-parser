@@ -3,63 +3,62 @@ from collections import defaultdict
 from scanner import make_scanner
 
 
-lr_grammar_scanner = make_scanner(
-    sep='=',
-    alt='[|]',
-    word=r"\b\w+\b",
-    raw=r"\'\w+?\'",
-    whitespace=r'[ \t\r\n]+',
-    minus=r'[-]',
-    label=r'\<.+?\>',
-    discard_names=('whitespace',)
-)
-
-
-def make_rules(start, grammar, kw):
-    words = [start]
-    labels = []
-    edit_rule = '@'
-    edit_rule_commit = True
-    next_edit_rule_commit = True
-    kw.add(edit_rule)
-    for tokname, tokvalue, tokpos in lr_grammar_scanner(grammar):
-        if tokname == 'minus':
-            next_edit_rule_commit = False
-        if tokname == 'word' or tokname == 'raw':
-            words.append(tokvalue)
-            labels.append(None)
-            kw.add(tokvalue)
-        elif tokname == 'alt':
-            yield (edit_rule, tuple(words), edit_rule_commit, labels[1:-1])
-            words = []
-            labels = []
-        elif tokname == 'sep':
-            tmp = words.pop()
-            yield (edit_rule, tuple(words), edit_rule_commit, labels[1:-1])
-            edit_rule_commit = next_edit_rule_commit
-            next_edit_rule_commit = True
-            edit_rule = tmp
-            words = []
-            labels = [None]
-        elif tokname == 'label':
-            # "a=b, b=c, d" -> {"a": "b", "b": "c", "d": None}
-            tokvalue = tokvalue.strip().replace(" ", "")
-            label = defaultdict(list)
-            for l in tokvalue[1:-1].split(","):
-                key, value = tuple(l.split("=", 1) + [None])[:2]
-                label[key].append(value)
-            # label = dict([tuple(l.split("=", 1) + [None])[:2] for l in tokvalue[1:-1].split(",")])
-            labels[-1] = label
-    yield (edit_rule, tuple(words), edit_rule_commit, labels[1:-1])
-
-
 class RuleSet(dict):
-    def __init__(self, rules):
+    lr_grammar_scanner = make_scanner(
+        sep='=',
+        alt='[|]',
+        word=r"\b\w+\b",
+        raw=r"\'\w+?\'",
+        whitespace=r'[ \t\r\n]+',
+        minus=r'[-]',
+        label=r'\<.+?\>',
+        discard_names=('whitespace',)
+    )
+
+    def __init__(self, grammar, kw_set, start_sym='S'):
         dict.__init__(self)
+        rules = self.make_rules(grammar, kw_set, start_sym)
         self.names_count = 0
         self.rules_count = 0
         self.labels = {}
         self.init(rules)
+
+    def make_rules(self, grammar, kw, start):
+        words = [start]
+        labels = []
+        edit_rule = '@'
+        edit_rule_commit = True
+        next_edit_rule_commit = True
+        kw.add(edit_rule)
+        for tokname, tokvalue, tokpos in self.lr_grammar_scanner(grammar):
+            if tokname == 'minus':
+                next_edit_rule_commit = False
+            if tokname == 'word' or tokname == 'raw':
+                words.append(tokvalue)
+                labels.append(None)
+                kw.add(tokvalue)
+            elif tokname == 'alt':
+                yield (edit_rule, tuple(words), edit_rule_commit, labels[1:-1])
+                words = []
+                labels = []
+            elif tokname == 'sep':
+                tmp = words.pop()
+                yield (edit_rule, tuple(words), edit_rule_commit, labels[1:-1])
+                edit_rule_commit = next_edit_rule_commit
+                next_edit_rule_commit = True
+                edit_rule = tmp
+                words = []
+                labels = [None]
+            elif tokname == 'label':
+                # "a=b, b=c, d" -> {"a": "b", "b": "c", "d": None}
+                tokvalue = tokvalue.strip().replace(" ", "")
+                label = defaultdict(list)
+                for l in tokvalue[1:-1].split(","):
+                    key, value = tuple(l.split("=", 1) + [None])[:2]
+                    label[key].append(value)
+                # label = dict([tuple(l.split("=", 1) + [None])[:2] for l in tokvalue[1:-1].split(",")])
+                labels[-1] = label
+        yield (edit_rule, tuple(words), edit_rule_commit, labels[1:-1])
 
     def init(self, rules):
         epsilons = self.fill(rules)
