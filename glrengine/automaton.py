@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import itertools
+from pprint import pformat
 from normalizer import morph_parser
 from labels import LABELS_CHECK
 from parser import Parser
@@ -14,7 +16,7 @@ class GLRAutomaton(Parser):
         A GLR parser.
     """
 
-    def __init__(self, grammar, scanner, start_sym='S', dictionaries=None, debug=False):
+    def __init__(self, grammar, scanner, start_sym='S', dictionaries=None, debug=0):
         Parser.__init__(self, grammar, scanner.tokens.keys(), start_sym)
         self.scanner = scanner
         self.dictionaries = dictionaries or {}
@@ -35,8 +37,8 @@ class GLRAutomaton(Parser):
             labels_ok = True
 
             for token_num, token in enumerate(tokens):
-                self.debug("\n\n\nNEW ITERATION. Token:", token[1])
-                self.debug(token)
+                self.debug(0, "\nNEW ITERATION. Token:", token[1], '        ', token[0])
+                self.debug(1, pformat(token))
                 if len(stack.active) == 0:
                     if not self.error_detected(text, tokens, prev_tok, stack.previously_active):
                         text, tokens = self.without_first_word(text, tokens)
@@ -53,9 +55,9 @@ class GLRAutomaton(Parser):
                     raw_token = "'%s'" % token[1]
                     if raw_token in self.ACTION[state]:
                         for r, rule in ifilter(lambda x: x[0] == 'R', self.ACTION[state][raw_token]):
-                            self.debug("- Reduce")
-                            self.debug("-- Actions", self.ACTION[state][raw_token])
-                            self.debug("-- Raw token", node, rule)
+                            self.debug(1, "- Reduce")
+                            self.debug(2, "-- Actions", self.ACTION[state][raw_token])
+                            self.debug(1, "-- Raw token", node, rule)
                             labels_ok = self.check_labels(tokens, self.R.labels[rule])
                             if not labels_ok:
                                 break
@@ -64,9 +66,9 @@ class GLRAutomaton(Parser):
                     # обычные состояния
                     if labels_ok:
                         for r, rule in ifilter(lambda x: x[0] == 'R', self.ACTION[state][token[0]]):
-                            self.debug("- Reduce")
-                            self.debug("-- Actions", self.ACTION[state])
-                            self.debug("-- Normal", node, rule)
+                            self.debug(1, "- Reduce")
+                            self.debug(2, "-- Actions", self.ACTION[state])
+                            self.debug(1, "-- Normal", node, rule)
                             labels_ok = self.check_labels(tokens, self.R.labels[rule])
                             if not labels_ok:
                                 break
@@ -75,21 +77,21 @@ class GLRAutomaton(Parser):
                     # имитация конца предложения
                     if labels_ok:
                         for r, rule in ifilter(lambda x: x[0] == 'R', self.ACTION[state]["$"]):
-                            self.debug("- Reduce")
-                            self.debug("-- Actions", self.ACTION[state])
-                            self.debug("-- EOS", node, rule)
+                            self.debug(1, "- Reduce")
+                            self.debug(2, "-- Actions", self.ACTION[state])
+                            self.debug(1, "-- EOS", node, rule)
                             labels_ok = self.check_labels(tokens, self.R.labels[rule])
                             if not labels_ok:
                                 break
                             stack.reduce(node, rule)
 
-                    self.debug("- STACK")
-                    if self.debug_mode:
+                    if self.debug_mode > 2:
+                        self.debug(2, "- STACK")
                         stack.dump()
 
                 # последняя свертка не удовлетворила лейблам
                 if not labels_ok:
-                    self.debug("- Labels not OK")
+                    self.debug(1, "- Labels not OK")
                     text, tokens = self.without_first_word(text, tokens)
                     break
 
@@ -97,8 +99,9 @@ class GLRAutomaton(Parser):
                 if token[0] == '$':
                     acc = stack.accepts()
                     if acc:
-                        self.results.append(text)
-                        self.debug("- Found new result:", self.results)
+                        res = list(itertools.takewhile(lambda x: x != token, tokens))
+                        self.results.append(res)
+                        self.debug(0, "- Found new result:", pformat(res))
                     else:
                         self.error_detected(text, tokens, token, stack.active)
                     return self.results
@@ -113,18 +116,18 @@ class GLRAutomaton(Parser):
                     raw_token = "'%s'" % token[1]
                     if raw_token in self.ACTION[state]:
                         for r, state in ifilter(lambda x: x[0] == 'S',  self.ACTION[state][raw_token]):
-                            self.debug("- Shift")
-                            self.debug("-- Raw", node, token)
+                            self.debug(1, "- Shift")
+                            self.debug(1, "-- Raw", node, pformat(token))
                             stack.shift(node, (token,), state)
 
                     # обычные состояния
                     for r, state in ifilter(lambda x: x[0] == 'S',  self.ACTION[state][token[0]]):
-                        self.debug("- Shift")
-                        self.debug("-- Normal", node, token)
+                        self.debug(1, "- Shift")
+                        self.debug(1, "-- Normal", node, pformat(token))
                         stack.shift(node, (token,), state)
 
-                    self.debug("- Stack:")
-                    if self.debug_mode:
+                    if self.debug_mode > 2:
+                        self.debug(2, "- Stack:")
                         stack.dump()
 
                 # слияние состояний
@@ -138,32 +141,32 @@ class GLRAutomaton(Parser):
         lines = text.splitlines()
         if lines:
             if len(lines) > (line - 1):
-                self.debug(lines[line - 1])
-                self.debug('%s^' % (''.join(c == '\t' and '\t' or ' ' for c in lines[line - 1][:column - 1])))
+                self.debug(1, lines[line - 1])
+                self.debug(1, '%s^' % (''.join(c == '\t' and '\t' or ' ' for c in lines[line - 1][:column - 1])))
             else:
-                self.debug("at end of text")
+                self.debug(1, "at end of text")
 
         toks = set(kw for st in last_states for kw in self.kw_set
                        if len(self.ACTION[st.data][kw]) > 0
                           and kw not in self.R and kw != '$')
-
         if not toks:
-            self.debug("Text", text)
-            self.debug("-- Part", text[:cur_tok[2]])
-            self.results.append(text[:cur_tok[2]])
-            self.debug("- Found new result:", self.results)
+            self.debug(1, "Text", text)
+            self.debug(0, "-- Part", text[:cur_tok[2]])
+            res = list(itertools.takewhile(lambda x: x != cur_tok, tokens))
+            self.results.append(res)
+            self.debug(0, "- Found new result!:", pformat(res))
 
         return False
 
     def check_labels(self, tokens, labels):
-        self.debug("- Checking labels...", labels)
+        self.debug(1, "- Checking labels...", labels)
         for i in xrange(len(labels)):
             if labels[i]:
                 for label_key, label_values in labels[i].iteritems():
                     for label_value in label_values:
-                        self.debug("-- Check label:", label_key, label_value)
+                        self.debug(1, "-- Check label:", label_key, label_value)
                         ok = LABELS_CHECK[label_key](label_value, tokens, i)
-                        self.debug("--- ", ok)
+                        self.debug(1, "--- ", ok)
                         if not ok:
                             return False
         return True
@@ -176,6 +179,6 @@ class GLRAutomaton(Parser):
     def validate_ast(self, ast):
         return ast
 
-    def debug(self, *args):
-        if self.debug_mode:
+    def debug(self, level, *args):
+        if self.debug_mode > level:
             print " ".join(map(unicode, args))
