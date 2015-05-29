@@ -13,3 +13,9 @@ class GLRSplitter(object):
     def __call__(self, text):
         text = self.clear(text)
         return self.split_re.split(text)
+
+
+class FakeSplitter(object):
+
+    def __call__(self, text):
+        return [text]
