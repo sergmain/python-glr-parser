@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+from collections import namedtuple
 from itertools import izip, chain
 from rules import RuleSet
 from lr import *
+
+Item = namedtuple('Item', ['rule_index', 'elements_count'])
 
 
 class Parser(object):
@@ -9,7 +12,7 @@ class Parser(object):
         self.kw_set = set(scanner_kw)
         self.kw_set.add('$')
         self.R = RuleSet(grammar, self.kw_set, start_sym)
-        self.I = set((r, i) for r in xrange(self.R.rules_count)
+        self.I = set(Item(r, i) for r in xrange(self.R.rules_count)
                      for i in xrange(len(self.R[r].elements) + 1))
         self.precompute_next_items()
         self.compute_lr0()
@@ -115,10 +118,9 @@ class Parser(object):
     def precompute_next_items(self):
         self.next_list = dict((k, set()) for k in self.R if type(k) is str or type(k) is unicode)
         for item in self.I:
-            r, i = item
-            rule = self.R[r]
-            if i > 0 and rule.elements[i - 1] in self.next_list:
-                self.next_list[rule.elements[i - 1]].add(item)
+            rule = self.R[item.rule_index]
+            if item.elements_count > 0 and rule.elements[item.elements_count - 1] in self.next_list:
+                self.next_list[rule.elements[item.elements_count - 1]].add(item)
 
     def next_items(self, item, visited=None):
         """
@@ -219,5 +221,5 @@ class Parser(object):
     @property
     def unused_rules(self):
         check = lambda i: reduce(lambda a, b: a and i not in b, self.LR0, True)
-        unused_rule_indices = set(x[0] for x in filter(check, self.I))
+        unused_rule_indices = set(x.rule_index for x in filter(check, self.I))
         return set(self.R[x].name for x in unused_rule_indices)
