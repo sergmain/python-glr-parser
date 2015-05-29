@@ -10,7 +10,7 @@ class Parser(object):
         self.kw_set.add('$')
         self.R = RuleSet(grammar, self.kw_set, start_sym)
         self.I = set((r, i) for r in xrange(self.R.rules_count)
-                     for i in xrange(len(self.R[r][1]) + 1))
+                     for i in xrange(len(self.R[r].elements) + 1))
         self.precompute_next_items()
         self.compute_lr0()
         self.LR0 = list(sorted(self.LR0))
@@ -21,7 +21,7 @@ class Parser(object):
         self.compute_ACTION()
 
     def __str__(self):
-        return '\n'.join(self.R[r][0] + ' = ' + ' '.join(self.R[r][1])
+        return '\n'.join(self.R[r].name + ' = ' + ' '.join(self.R[r].elements)
                          for r in xrange(self.R.rules_count))
 
     def conflicts(self):
@@ -116,9 +116,9 @@ class Parser(object):
         self.next_list = dict((k, set()) for k in self.R if type(k) is str or type(k) is unicode)
         for item in self.I:
             r, i = item
-            n, e, c = self.R[r]
-            if i > 0 and e[i - 1] in self.next_list:
-                self.next_list[e[i - 1]].add(item)
+            rule = self.R[r]
+            if i > 0 and rule.elements[i - 1] in self.next_list:
+                self.next_list[rule.elements[i - 1]].add(item)
 
     def next_items(self, item, visited=None):
         """
@@ -127,11 +127,11 @@ class Parser(object):
         items = set()
         if visited is None:
             visited = set()
-        name = self.R[item[0]][0]
+        name = self.R[item[0]].name
         for it in self.next_list[name]:
             if it not in visited:
                 r, i = it
-                e = self.R[r][1]
+                e = self.R[r].elements
                 visited.add(it)
                 if len(e) == i:
                     items.update(self.next_items(it, visited))
@@ -158,7 +158,7 @@ class Parser(object):
             action = self.init_row()
 
             # свертки
-            for r, i in ifilter(lambda (r, i): i == len(self.R[r][1]), s):
+            for r, i in ifilter(lambda (r, i): i == len(self.R[r].elements), s):
                 if not r:
                     action['$'].append(('A',))
                 else:
@@ -220,4 +220,4 @@ class Parser(object):
     def unused_rules(self):
         check = lambda i: reduce(lambda a, b: a and i not in b, self.LR0, True)
         unused_rule_indices = set(x[0] for x in filter(check, self.I))
-        return set(self.R[x][0] for x in unused_rule_indices)
+        return set(self.R[x].name for x in unused_rule_indices)
