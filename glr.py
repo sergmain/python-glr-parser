@@ -36,7 +36,7 @@ class GLRParser(object):
         Word = lat
     """
 
-    def __init__(self, grammar, root="S", dictionaries=None, parser=None, debug=False):
+    def __init__(self, grammar, root="S", dictionaries=None, parser=None, splitter=None, debug=False):
         grammar_rules = u"%s\n%s" % (grammar, self.DEFAULT_GRAMMAR)
         if dictionaries:
             # превращает {k: [a, b, c]} -> "k = 'a' | 'b' | 'c'"
@@ -54,12 +54,12 @@ class GLRParser(object):
         if parser:
             parser_rules.update(parser)
 
-        self.splitter = GLRSplitter()
+        self.splitter = (splitter or GLRSplitter)()
         self.scanner = GLRScanner(**parser_rules)
         self.glr = GLRAutomaton(
+            start_sym=root,
             grammar=grammar_rules,
             scanner=self.scanner,
-            start_sym=root,
             debug=debug
         )
 
