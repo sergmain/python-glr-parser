@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-from collections import namedtuple
-from itertools import izip, chain
+from itertools import izip, chain, ifilter, imap
 from rules import RuleSet
-from lr import *
-
-Item = namedtuple('Item', ['rule_index', 'elements_count'])
+from lr import closure, follow, itemstr, itemsetstr, kernel, first, Item
 
 
 class Parser(object):
@@ -51,7 +48,7 @@ class Parser(object):
             Compute the LR(0) sets.
         """
         self.LR0 = set()
-        x = closure([(0, 0)], self.R)
+        x = closure([Item(0, 0)], self.R)
         self.initial_items = x
         stack = [tuple(sorted(x))]
         while stack:
@@ -129,13 +126,12 @@ class Parser(object):
         items = set()
         if visited is None:
             visited = set()
-        name = self.R[item[0]].name
+        name = self.R[item.rule_index].name
         for it in self.next_list[name]:
             if it not in visited:
-                r, i = it
-                e = self.R[r].elements
+                elements = self.R[it.rule_index].elements
                 visited.add(it)
-                if len(e) == i:
+                if len(elements) == it.elements_count:
                     items.update(self.next_items(it, visited))
                 else:
                     items.add(it)
@@ -160,12 +156,12 @@ class Parser(object):
             action = self.init_row()
 
             # свертки
-            for r, i in ifilter(lambda (r, i): i == len(self.R[r].elements), s):
-                if not r:
+            for item in ifilter(lambda item: item.elements_count == len(self.R[item.rule_index].elements), s):
+                if not item.rule_index:
                     action['$'].append(('A',))
                 else:
-                    for kw in self.following_tokens((r, i)):
-                        action[kw].append(('R', r))
+                    for kw in self.following_tokens(item):
+                        action[kw].append(('R', item.rule_index))
 
             # переносы
             for tok, dest in g.iteritems():

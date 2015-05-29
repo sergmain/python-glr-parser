@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+from collections import namedtuple
 from itertools import ifilter, imap
+
+Item = namedtuple('Item', ['rule_index', 'elements_count'])
 
 
 def expand_item(item, R):
@@ -57,7 +60,7 @@ def follow(itemset, R):
         e = ruleelems[i]
         if e not in ret:
             ret[e] = set()
-        ret[e].update(closure([(ruleidx, i + 1)], R))
+        ret[e].update(closure([Item(ruleidx, i + 1)], R))
     return ret
 
 
@@ -72,15 +75,14 @@ def closure(itemset, R):
         last = len(C)
         Ctmp = set()
         for item in C:
-            r, i = item
-            name, elems, commit = R[r]
+            rule = R[item.rule_index]
             #elems, i, name = expand_item(item, R)
-            if i == len(elems):
+            if item.elements_count == len(rule.elements):
                 continue
-            if elems[i] in R and elems[i] not in visited:
-                visited.add(elems[i])
-                for r in R[elems[i]]:
-                    Ctmp.add((r, 0))
+            if rule.elements[item.elements_count] in R and rule.elements[item.elements_count] not in visited:
+                visited.add(rule.elements[item.elements_count])
+                for r in R[rule.elements[item.elements_count]]:
+                    Ctmp.add(Item(r, 0))
                 #Ctmp.update((r, 0) for r in R[elems[i]])
         C.update(Ctmp)
     return C
