@@ -50,11 +50,7 @@ def first(itemset, R):
     return ret
 
 
-def follow(itemset, rules):
-    """
-        All transitions from an item set in a dictionary [token]->item set
-    """
-    result = defaultdict(set)
+def iterate_lookaheads(itemset, rules):
     for item in itemset:
         rule = rules[item.rule_index]
 
@@ -64,6 +60,16 @@ def follow(itemset, rules):
 
         lookahead = rule.elements[item.dot_position]
 
+        assert lookahead in rules
+        yield item, lookahead
+
+
+def follow(itemset, rules):
+    """
+        All transitions from an item set in a dictionary [token]->item set
+    """
+    result = defaultdict(set)
+    for item, lookahead in iterate_lookaheads(itemset, rules):
         tmp = closure([Item(item.rule_index, item.dot_position + 1)], rules)
         result[lookahead].update(tmp)
     return result
@@ -77,15 +83,8 @@ def closure(itemset, rules):
     visited = set()
     while True:
         tmp = set()
-        for item in result:
-            rule = rules[item.rule_index]
-
-            if item.dot_position == len(rule.elements):
-                # dot is in the end, there is no look ahead symbol
-                continue
-
-            lookahead = rule.elements[item.dot_position]
-            if lookahead in rules and lookahead not in visited:
+        for item, lookahead in iterate_lookaheads(result, rules):
+            if lookahead not in visited:
                 visited.add(lookahead)
                 for rule_index in rules[lookahead]: # TODO: get_by_symbol
                     tmp.add(Item(rule_index, 0))
