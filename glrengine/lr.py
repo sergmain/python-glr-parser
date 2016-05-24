@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
 from collections import namedtuple
-from itertools import ifilter, imap
+from itertools import ifilter, imap, izip
+
+from glrengine.rules import RuleSet
 
 Item = namedtuple('Item', ['rule_index', 'dot_position'])
 
@@ -36,20 +38,6 @@ def itemsetstr(itemset, R, label=''):
     return '\n'.join(build)
 
 
-def first(itemset, R):
-    """
-        Set of the tokens at the right of each dot in this item set
-    """
-    ret = set()
-    for ruleelems, i, rulename in expand_itemset(itemset, R):
-        if i == len(ruleelems):
-            continue
-        e = ruleelems[i]
-        if not e in R:
-            ret.add(e)
-    return ret
-
-
 def iterate_lookaheads(itemset, rules):
     for item in itemset:
         rule = rules[item.rule_index]
@@ -60,8 +48,18 @@ def iterate_lookaheads(itemset, rules):
 
         lookahead = rule.elements[item.dot_position]
 
-        assert lookahead in rules
         yield item, lookahead
+
+
+def first(itemset, rules):
+    """
+        Set of the tokens at the right of each dot in this item set
+    """
+    result = set()
+    for item, lookahead in iterate_lookaheads(itemset, rules):
+        if not lookahead in rules:
+            result.add(lookahead)
+    return result
 
 
 def follow(itemset, rules):
@@ -84,7 +82,7 @@ def closure(itemset, rules):
     while True:
         tmp = set()
         for item, lookahead in iterate_lookaheads(result, rules):
-            if lookahead not in visited:
+            if lookahead in rules and lookahead not in visited:
                 visited.add(lookahead)
                 for rule_index in rules[lookahead]: # TODO: get_by_symbol
                     tmp.add(Item(rule_index, 0))
@@ -94,6 +92,55 @@ def closure(itemset, rules):
             return result
         result.update(tmp)
 
+
+def generate_tables(rules):
+    assert isinstance(rules, RuleSet)
+
+    LR0 = set()
+    x = closure([Item(0, 0)], rules)
+    stack = [tuple(sorted(x))]
+    while stack:
+        x = stack.pop()
+        LR0.add(x)
+        F = follow(x, rules)
+        for t, s in F.iteritems():
+            s = tuple(sorted(s))
+            if s not in LR0:
+                stack.append(s)
+    LR0 = list(sorted(LR0))
+
+    LR0_idx = {}
+    for i, s in enumerate(LR0):
+        LR0_idx[s] = i
+
+    GOTO = []
+    for s in LR0:
+        f = {}
+        for tok, dest in follow(s, rules).iteritems():
+            f[tok] = LR0_idx[tuple(sorted(closure(dest, rules)))]
+        GOTO.append(f)
+
+
+    ACTION = []
+    for s, g in izip(LR0, GOTO):
+        action = defaultdict(list)
+
+        # свертки
+        for item in ifilter(lambda item: item.dot_position == len(rules[item.rule_index].elements), s):
+            if not item.rule_index:
+                action['$'].append(('A', 0))
+            # else:
+            #     for kw in self.following_tokens(item):
+            #         action[kw].append(('R', item.rule_index))
+
+        # переносы
+        for tok, dest in g.iteritems():
+            action[tok].append(('S', dest))
+
+        # commit
+        ACTION.append(action)
+
+    return ACTION, GOTO, LR0
 
 def kernel(itemset):
     """
