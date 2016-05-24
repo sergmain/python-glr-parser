@@ -116,8 +116,8 @@ class Parser(object):
         self.next_list = dict((k, set()) for k in self.R if type(k) is str or type(k) is unicode)
         for item in self.I:
             rule = self.R[item.rule_index]
-            if item.elements_count > 0 and rule.elements[item.elements_count - 1] in self.next_list:
-                self.next_list[rule.elements[item.elements_count - 1]].add(item)
+            if item.dot_position > 0 and rule.elements[item.dot_position - 1] in self.next_list:
+                self.next_list[rule.elements[item.dot_position - 1]].add(item)
 
     def next_items(self, item, visited=None):
         """
@@ -131,7 +131,7 @@ class Parser(object):
             if it not in visited:
                 elements = self.R[it.rule_index].elements
                 visited.add(it)
-                if len(elements) == it.elements_count:
+                if len(elements) == it.dot_position:
                     items.update(self.next_items(it, visited))
                 else:
                     items.add(it)
@@ -156,7 +156,7 @@ class Parser(object):
             action = self.init_row()
 
             # свертки
-            for item in ifilter(lambda item: item.elements_count == len(self.R[item.rule_index].elements), s):
+            for item in ifilter(lambda item: item.dot_position == len(self.R[item.rule_index].elements), s):
                 if not item.rule_index:
                     action['$'].append(('A',))
                 else:

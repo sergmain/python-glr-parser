@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
 from collections import namedtuple
 from itertools import ifilter, imap
 
-Item = namedtuple('Item', ['rule_index', 'elements_count'])
+Item = namedtuple('Item', ['rule_index', 'dot_position'])
 
 
 def expand_item(item, R):
@@ -49,43 +50,50 @@ def first(itemset, R):
     return ret
 
 
-def follow(itemset, R):
+def follow(itemset, rules):
     """
         All transitions from an item set in a dictionary [token]->item set
     """
-    ret = dict()
-    for ruleidx, ruleelems, i, rulename in expand_itemset2(itemset, R):
-        if i == len(ruleelems):
+    result = defaultdict(set)
+    for item in itemset:
+        rule = rules[item.rule_index]
+
+        if item.dot_position == len(rule.elements):
+            # dot is in the end, there is no look ahead symbol
             continue
-        e = ruleelems[i]
-        if e not in ret:
-            ret[e] = set()
-        ret[e].update(closure([Item(ruleidx, i + 1)], R))
-    return ret
+
+        lookahead = rule.elements[item.dot_position]
+
+        tmp = closure([Item(item.rule_index, item.dot_position + 1)], rules)
+        result[lookahead].update(tmp)
+    return result
 
 
-def closure(itemset, R):
+def closure(itemset, rules):
     """
         The epsilon-closure of this item set
     """
-    C = set(itemset)
-    last = -1
+    result = set(itemset)
     visited = set()
-    while len(C) != last:
-        last = len(C)
-        Ctmp = set()
-        for item in C:
-            rule = R[item.rule_index]
-            #elems, i, name = expand_item(item, R)
-            if item.elements_count == len(rule.elements):
+    while True:
+        tmp = set()
+        for item in result:
+            rule = rules[item.rule_index]
+
+            if item.dot_position == len(rule.elements):
+                # dot is in the end, there is no look ahead symbol
                 continue
-            if rule.elements[item.elements_count] in R and rule.elements[item.elements_count] not in visited:
-                visited.add(rule.elements[item.elements_count])
-                for r in R[rule.elements[item.elements_count]]:
-                    Ctmp.add(Item(r, 0))
-                #Ctmp.update((r, 0) for r in R[elems[i]])
-        C.update(Ctmp)
-    return C
+
+            lookahead = rule.elements[item.dot_position]
+            if lookahead in rules and lookahead not in visited:
+                visited.add(lookahead)
+                for rule_index in rules[lookahead]: # TODO: get_by_symbol
+                    tmp.add(Item(rule_index, 0))
+
+        if not tmp:
+            # no changes
+            return result
+        result.update(tmp)
 
 
 def kernel(itemset):
