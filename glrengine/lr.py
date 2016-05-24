@@ -92,6 +92,7 @@ def closure(itemset, rules):
             return result
         result.update(tmp)
 
+Node = namedtuple('Node', ['itemset', 'follow_dict'])
 
 def generate_tables(rules):
     assert isinstance(rules, RuleSet)
