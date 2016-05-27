@@ -22,7 +22,7 @@ Value = VARIABLES
 """
 
 
-grammar = u"""
+grammar2 = u"""
 S = Sums
 Sums = Sums 'plus' Sums
 Sums = number
@@ -97,33 +97,48 @@ def print_table(table, buf):
     for row in table:
         for j, cell in enumerate(row):
             col_widths[j] = max(col_widths[j], len(str(cell)))
-    print col_widths
 
+    def print_row(i, chars, row=None):
+        if i>0 and i % 2 == 0:
+            buf.write('\033[48;5;236m')
+        for j, cell in enumerate(row or col_widths):
+            if j == 0:
+                buf.write(chars[0:2])
 
-    for i, row in enumerate(table):
-        for j, cell in enumerate(row):
-            buf.write(str(cell).ljust(col_widths[j]))
-            buf.write(' | ')
+            if row:
+                buf.write(str(cell).ljust(col_widths[j]))
+            else:
+                buf.write(chars[1] * col_widths[j])
+
+            if j < len(col_widths) - 1:
+                buf.write(chars[1:4])
+            else:
+                buf.write(chars[3:5])
+
+        buf.write('\033[m')
         buf.write('\n')
 
-table = []
-symbols = sorted(unique(k for row in t for k in row.keys()))
-table.append([''] + symbols)
-for i, row in enumerate(t):
-    res = [i]
-    for k in symbols:
-        res.append(', '.join('%s%s' % a for a in row[k]) if k in row else '')
-    table.append(res)
+    for i, row in enumerate(table):
+        if i == 0:
+            print_row(i, u'┌─┬─┐')
+        elif i == 1:
+            print_row(i, u'├─┼─┤')
+        if True:
+            print_row(i, u'│ │ │', row)
+        if i == len(table) - 1:
+            print_row(i, u'└─┴─┘')
 
-print_table(table, sys.stdout)
 
-# print '\n # |',
-# for k in symbols:
-#     print '%-9s|' % k,
-# for i, row in enumerate(t):
-#     print '\n%2d |' % i,
-#     for k in symbols:
-#         print '%-9s|' % (', '.join('%s%s' % a for a in row[k]) if k in row else ''),
+def gen_printable_table(action_table):
+    table = []
+    symbols = sorted(unique(k for row in t for k in row.keys()))
+    table.append([''] + symbols)
+    for i, row in enumerate(action_table):
+        res = [i]
+        for k in symbols:
+            res.append(', '.join('%s%s' % a for a in row[k]) if k in row else '')
+        table.append(res)
+    return table
 
-folowers = generate_followers(rules)
-print folowers
+print_table(gen_printable_table(t), sys.stdout)
+

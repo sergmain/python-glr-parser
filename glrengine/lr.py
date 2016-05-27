@@ -95,7 +95,7 @@ def generate_graph(rules):
         nodes.append(node)
         node_by_itemset[node.itemset] = node
 
-        print '%2s | %9s | %2d | %s' % (parent_node_index or 0, parent_lookahead or '', node.index, node.itemset)
+        #print '%2s | %9s | %2d | %s' % (parent_node_index or 0, parent_lookahead or '', node.index, node.itemset)
 
         if parent_node_index is not None:
             nodes[parent_node_index].follow_dict[parent_lookahead].add(node.index)
@@ -109,7 +109,7 @@ def generate_graph(rules):
                 # State already exist, just add follow link
                 child_node = node_by_itemset[itemset]
                 node.follow_dict[lookahead].add(child_node.index)
-                print '%2s | %9s | %2d | %s' % (node.index, lookahead, child_node.index, '')
+                #print '%2s | %9s | %2d | %s' % (node.index, lookahead, child_node.index, '')
     return nodes
 
 
