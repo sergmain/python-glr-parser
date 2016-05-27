@@ -9,7 +9,7 @@ class RuleSet(dict):
         sep='=',
         alt='[|]',
         word=r"\b\w+\b",
-        raw=r"\'\w+?\'",
+        raw=r"\'[^\s']+\'",
         whitespace=r'[ \t\r\n]+',
         minus=r'[-]',
         label=r'\<.+?\>',

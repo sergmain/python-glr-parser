@@ -1,4 +1,5 @@
 # coding=utf-8
+import re
 import sys
 
 from glrengine import GLRScanner
@@ -142,3 +143,11 @@ def gen_printable_table(action_table):
 
 print_table(gen_printable_table(t), sys.stdout)
 
+Token = namedtuple('Token', ['type', 'value', 'start', 'end'])
+def tokenize(string):
+    split_re = re.compile('(?:(?P<alpha>[^\W\d_]+)|(?P<space>\s+)|(?P<digit>\d+)|(?P<punct>[^\w\s]|_))', re.U)
+    for m in split_re.finditer(string):
+        yield Token(m.lastgroup, m.group(m.lastgroup), m.start(), m.end())
+
+for s, v, b, e in tokenize(u'Кронштейн f0a f_n КАМАЗ 20т. (На 5320,740-15)'):
+    print s, v, b, e
