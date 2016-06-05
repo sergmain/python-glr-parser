@@ -95,12 +95,12 @@ def generate_state_graph(rules):
     while stack:
         parent_node_index, parent_lookahead, itemset = stack.pop(0)
 
-        # if itemset in node_by_itemset:
-        #     # State already exist, just add follow link
-        #     child_node = node_by_itemset[itemset]
-        #     node.follow_dict[lookahead].add(child_node.index)
-        #     print '%2s | %-10s | %2d | %s' % (node.index, lookahead, child_node.index, '')
-        #     continue
+        if itemset in node_by_itemset:
+            # State already exist, just add follow link
+            node = node_by_itemset[itemset]
+            nodes[parent_node_index].follow_dict[parent_lookahead].add(node.index)
+            print '%2s | %-10s | %2d | %s' % (parent_node_index, parent_lookahead, node.index, '')
+            continue
 
         node = Node(len(nodes), itemset, defaultdict(set), parent_node_index, parent_lookahead)
         nodes.append(node)
@@ -113,15 +113,7 @@ def generate_state_graph(rules):
 
         for lookahead, itemset in follow(node.itemset, rules):
             itemset = tuple(sorted(itemset))
-            if itemset not in node_by_itemset:
-                # Add new state, follow links will be added when it popped from the stack
-                stack.append((node.index, lookahead, itemset))
-                # print '%2s | %-10s | -- | %s' % (node.index, lookahead, '')
-            else:
-                # State already exist, just add follow link
-                child_node = node_by_itemset[itemset]
-                node.follow_dict[lookahead].add(child_node.index)
-                print '%2s | %-10s | %2d | %s' % (node.index, lookahead, child_node.index, '')
+            stack.append((node.index, lookahead, itemset))
     return nodes
 
 

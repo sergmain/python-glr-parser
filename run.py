@@ -105,6 +105,21 @@ for i, r in sorted(rules.items()):
 # nodes = generate_state_graph(rules)
 action_goto_table = generate_tables(rules)
 
+
+def change_state_indexes(table, mapping):
+    reverse_map = dict((v,k) for k,v in mapping.items())
+    result = [table[reverse_map.get(i,i)] for i in range(len(table))]
+    for row in result:
+        for symbol, actions in row.items():
+            for i, action in enumerate(actions):
+                if action.state in mapping:
+                    actions[i] = Action(action.action, mapping[action.state], action.rule_index)
+    return result
+
+print_table(gen_printable_table(action_goto_table), sys.stdout)
+
+action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9, 9:7})
+
 print_table(gen_printable_table(action_goto_table), sys.stdout)
 
 class Token(namedtuple('Token', ['symbol', 'value', 'start', 'end'])):
