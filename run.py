@@ -4,9 +4,8 @@ import sys
 
 from glrengine import GLRScanner
 from glrengine.lr import *
-
-
-
+from glrengine.utils import gen_printable_table
+from glrengine.utils import print_table
 
 dictionaries = {
     u"VARIABLES": [u"A", u"B", u"C"]
@@ -32,6 +31,16 @@ E = A '1'
 E = B '2'
 A = '1'
 B = '1'
+"""
+
+grammar = u"""
+S = NP VP
+S = S PP
+NP = n
+NP = det n
+NP = NP PP
+PP = prep NP
+VP = v NP
 """
 
 class GrammarParser(object):
@@ -89,65 +98,117 @@ parser_rules = GrammarParser().parse_grammar(grammar, dictionaries)
 scanner = GLRScanner(**parser_rules)
 rules = RuleSet(grammar, set(scanner.tokens.keys()).union({'$'}), 'S')
 
-nodes = generate_graph(rules)
-t = generate_tables(rules)
+for i, r in sorted(rules.items()):
+    if isinstance(i, int):
+        print '%2d | %-10s | %s' %(i,r[0],' '.join(r[1]))
 
+# nodes = generate_state_graph(rules)
+action_goto_table = generate_tables(rules)
 
-def print_table(table, buf):
-    col_widths = [0] * len(table[0])
-    for row in table:
-        for j, cell in enumerate(row):
-            col_widths[j] = max(col_widths[j], len(str(cell)))
+print_table(gen_printable_table(action_goto_table), sys.stdout)
 
-    def print_row(i, chars, row=None):
-        if i>0 and i % 2 == 0:
-            buf.write('\033[48;5;236m')
-        for j, cell in enumerate(row or col_widths):
-            if j == 0:
-                buf.write(chars[0:2])
+class Token(namedtuple('Token', ['symbol', 'value', 'start', 'end'])):
+    __slots__ = ()
+    def __repr__(self):
+        return self.symbol
 
-            if row:
-                buf.write(str(cell).ljust(col_widths[j]))
-            else:
-                buf.write(chars[1] * col_widths[j])
-
-            if j < len(col_widths) - 1:
-                buf.write(chars[1:4])
-            else:
-                buf.write(chars[3:5])
-
-        buf.write('\033[m')
-        buf.write('\n')
-
-    for i, row in enumerate(table):
-        if i == 0:
-            print_row(i, u'┌─┬─┐')
-        elif i == 1:
-            print_row(i, u'├─┼─┤')
-        if True:
-            print_row(i, u'│ │ │', row)
-        if i == len(table) - 1:
-            print_row(i, u'└─┴─┘')
-
-
-def gen_printable_table(action_table):
-    table = []
-    symbols = sorted(unique(k for row in t for k in row.keys()))
-    table.append([''] + symbols)
-    for i, row in enumerate(action_table):
-        res = [i]
-        for k in symbols:
-            res.append(', '.join('%s%s' % a for a in row[k]) if k in row else '')
-        table.append(res)
-    return table
-
-print_table(gen_printable_table(t), sys.stdout)
-
-Token = namedtuple('Token', ['type', 'value', 'start', 'end'])
 def tokenize(string):
     split_re = re.compile('(?:(?P<alpha>[^\W\d_]+)|(?P<space>\s+)|(?P<digit>\d+)|(?P<punct>[^\w\s]|_))', re.U)
     for m in split_re.finditer(string):
         yield Token(m.lastgroup, m.group(m.lastgroup), m.start(), m.end())
 
-for s, v, b, e in tokenize(u'Кронштейн f0a f_n КАМАЗ 20т. (На 5320,740-15)'):
-    print s, v, b, e
+# for t, v, s, e in tokenize(u'Кронштейн f0a f_n КАМАЗ 20т. (На 5320,740-15)'):
+#     print t, v, s, e
+
+
+class StackItem(namedtuple('StackItem', ['token', 'state', 'prev'])):
+    __slots__ = ()
+    def __repr__(self):
+        if self.prev:
+            return '%s/%s (%s)' % (self.token, self.state, ', '.join(repr(i) for i in self.prev))
+        else:
+            return '@'
+
+class Stack(object):
+
+    def __init__(self, rules, action_goto_table):
+        self.rules = rules
+        self.action_goto_table = action_goto_table
+
+        self.heads = []
+
+    def pop(self, node, depth):
+        if depth == 0:
+            return [[node]]
+        if not node.prev:
+            return []
+
+        result = []
+        for prev in node.prev:
+            for path in self.pop(prev, depth-1):
+                result.append(path + [node])
+        return result
+
+    def shift(self, head, token, state):
+        new_head = StackItem(token, state, (head, ) if head else None)
+        self.heads.append(new_head)
+        return new_head
+
+    def reduce(self, head, rule_index):
+        result = []
+        rule = self.rules[rule_index]
+        depth = len(rule.elements)
+        for path in self.pop(head, depth):
+            goto_actions = self.action_goto_table[path[0].state][rule.name]
+            # TODO: probably assert that only 1 goto action and it is 'G'
+            for goto_action in goto_actions:
+                if goto_action.action == 'G':
+                    new_head = self.shift(path[0], rule.name, goto_action.state)
+                    result.append(new_head)
+        return result
+
+
+
+#TODO: rename Rule.name -> left_symbol
+#TODO: rename Rule.elements -> right_symbols
+
+
+def parse(rules, action_goto_table, tokens):
+    stack = Stack(rules, action_goto_table)
+
+    stack.shift(None, None, 0)
+
+    for token in tokens:
+        print 'Token', token
+
+        nodes_to_process = stack.heads[:]
+        while nodes_to_process:
+            node = nodes_to_process.pop(0)
+
+            actions = action_goto_table[node.state][token.symbol]
+            if not actions:
+                continue
+
+            print '- Node', node
+            for action in actions:
+                if action.action == 'S':
+                    print '- - Shift to state ', action.state
+                    shifted_node = stack.shift(node, token, action.state)
+                    print '- - -', shifted_node
+                elif action.action == 'R':
+                    print '- - Reduce by rule', action.rule_index
+                    reduced_nodes = stack.reduce(node, action.rule_index)
+                    nodes_to_process.extend(reduced_nodes)
+                    for n in reduced_nodes:
+                        print '- - +', n
+
+    for node in stack.heads:
+        print node
+
+
+parse(rules, action_goto_table, [
+    Token('number', '4', 0, 0),
+    Token("'mul'", '*', 0, 0),
+    Token('VARIABLES', 'X', 0, 0),
+    Token('$', '', 0, 0),
+])

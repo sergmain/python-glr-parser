@@ -4,7 +4,10 @@ from collections import namedtuple
 
 from glrengine.rules import RuleSet
 
-Item = namedtuple('Item', ['rule_index', 'dot_position'])
+class Item(namedtuple('Item', ['rule_index', 'dot_position'])):
+    __slots__ = ()
+    def __repr__(self):
+        return '#%d.%d' % self
 
 
 def itemstr():
@@ -76,12 +79,13 @@ def closure(itemset, rules):
 
 
 Node = namedtuple('Node', ['index', 'itemset', 'follow_dict', 'parent_rule_index', 'parent_lookahead'])
-Action = namedtuple('Action', ['action', 'rule_index'])
+Action = namedtuple('Action', ['action', 'state', 'rule_index'])
 
 
-def generate_graph(rules):
+def generate_state_graph(rules):
     assert isinstance(rules, RuleSet)
-
+    print 'Parent          | Next        '
+    print 'St | Lookahead  | St | Itemset'
     nodes = []
     node_by_itemset = {}
 
@@ -91,11 +95,18 @@ def generate_graph(rules):
     while stack:
         parent_node_index, parent_lookahead, itemset = stack.pop(0)
 
+        # if itemset in node_by_itemset:
+        #     # State already exist, just add follow link
+        #     child_node = node_by_itemset[itemset]
+        #     node.follow_dict[lookahead].add(child_node.index)
+        #     print '%2s | %-10s | %2d | %s' % (node.index, lookahead, child_node.index, '')
+        #     continue
+
         node = Node(len(nodes), itemset, defaultdict(set), parent_node_index, parent_lookahead)
         nodes.append(node)
         node_by_itemset[node.itemset] = node
 
-        #print '%2s | %9s | %2d | %s' % (parent_node_index or 0, parent_lookahead or '', node.index, node.itemset)
+        print '%2s | %-10s | %2d | %s' % (parent_node_index or 0, parent_lookahead or '', node.index, node.itemset)
 
         if parent_node_index is not None:
             nodes[parent_node_index].follow_dict[parent_lookahead].add(node.index)
@@ -105,11 +116,12 @@ def generate_graph(rules):
             if itemset not in node_by_itemset:
                 # Add new state, follow links will be added when it popped from the stack
                 stack.append((node.index, lookahead, itemset))
+                # print '%2s | %-10s | -- | %s' % (node.index, lookahead, '')
             else:
                 # State already exist, just add follow link
                 child_node = node_by_itemset[itemset]
                 node.follow_dict[lookahead].add(child_node.index)
-                #print '%2s | %9s | %2d | %s' % (node.index, lookahead, child_node.index, '')
+                print '%2s | %-10s | %2d | %s' % (node.index, lookahead, child_node.index, '')
     return nodes
 
 
@@ -130,10 +142,13 @@ def generate_followers(rules):
 
     starters = dict((s, set(get_starters(s))) for s in nonterminals)
 
-    def get_followers(symbol):
+    def get_followers(symbol, seen_symbols=None):
+        seen_symbols = seen_symbols or set()
+        seen_symbols.add(symbol)
+
         result = []
         for rule in rules.values():
-            if isinstance(rule, set):  # TODO: remove warkaround
+            if isinstance(rule, set):  # TODO: remove workaround
                 continue
 
             if symbol not in rule.elements:
@@ -141,8 +156,8 @@ def generate_followers(rules):
 
             index = rule.elements.index(symbol)
             if index + 1 == len(rule.elements):
-                if rule.name != symbol:
-                    result.extend(get_followers(rule.name))
+                if rule.name != symbol and rule.name not in seen_symbols:
+                    result.extend(get_followers(rule.name, seen_symbols))
             else:
                 next = rule.elements[index+1]
                 if next in nonterminals:
@@ -156,7 +171,7 @@ def generate_followers(rules):
 
 
 def generate_tables(rules):
-    nodes = generate_graph(rules)
+    nodes = generate_state_graph(rules)
     followers = generate_followers(rules)
 
     result = []
@@ -168,17 +183,20 @@ def generate_tables(rules):
             rule = rules[item.rule_index]
             if item.dot_position == len(rule.elements):
                 if rule.name == '@':
-                    actions['$'].append(Action('A', 0))
+                    actions['$'].append(Action('A', None, None))
                 else:
                     for follower in followers[rule.name]:
-                        actions[follower].append(Action('R', item.rule_index))
-                    actions['$'].append(Action('R', item.rule_index))
+                        actions[follower].append(Action('R', None, item.rule_index))
+                    actions['$'].append(Action('R', None, item.rule_index))
 
-        # Shifts
+        # Shifts & goto's
         for lookahead, node_indexes in node.follow_dict.items():
             for node_index in node_indexes:
                 child_node = nodes[node_index]
-                actions[lookahead].append(Action('' if lookahead in followers else 'S', child_node.index))
+                if lookahead in followers:
+                    actions[lookahead].append(Action('G', child_node.index, None))
+                else:
+                    actions[lookahead].append(Action('S', child_node.index, None))
 
         result.append(actions)
     return result
