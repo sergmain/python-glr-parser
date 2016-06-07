@@ -5,7 +5,7 @@ from itertools import groupby
 
 from glrengine import GLRScanner
 from glrengine.lr import *
-from glrengine.utils import gen_printable_table, print_ast
+from glrengine.utils import gen_printable_table, print_ast, print_stack_item
 from glrengine.utils import print_table
 
 dictionaries = {
@@ -135,40 +135,12 @@ def tokenize(string):
 #     print t, v, s, e
 
 
+
+
+
+
 class StackItem(namedtuple('StackItem', ['token', 'state', 'reduced', 'prev'])):
     __slots__ = ()
-
-    def get_pathes(self):
-        if self.prev:
-            for prev in self.prev:
-                for p in prev.get_pathes():
-                    yield p + [self]
-        else:
-            yield [self]
-
-    def path_str(self, second_line_prefix = ''):
-        if self.prev:
-            pathes = []
-            for path in self.get_pathes():
-                pathes.append(' > '.join(repr(i) for i in path))
-            length = max(len(p) for p in pathes)
-
-            results = []
-            for i, path in enumerate(pathes):
-                result = '' if i == 0 else second_line_prefix
-                result += path.rjust(length)
-                if len(pathes) > 1:
-                    if i == 0:
-                        result += ' ╮'
-                    elif i!=len(pathes)-1:
-                        result += ' │'
-                    else:
-                        result += ' ╯'
-                results.append(result)
-
-            return '\n'.join(results)
-        else:
-            return '0'
 
     def __repr__(self):
         if self.prev:
@@ -237,28 +209,28 @@ def parse(rules, action_goto_table, tokens):
     current = stack.heads[:]
 
     for token in tokens:
-        print '\n\nToken', token
+        print '\n\nTOKEN:', token
 
         process_reduce_nodes = current[:]
         while process_reduce_nodes:
             new_reduce_nodes = []
             for node, action in get_by_action_type(process_reduce_nodes, token, 'R'):
-                print '- %s reduce by %s' % (node, action.rule_index)
+                print '- REDUCE: (%s) by (%s)' % (node, action.rule_index)
                 reduced_nodes = stack.reduce(node, action.rule_index)
                 new_reduce_nodes.extend(reduced_nodes)
                 for n in reduced_nodes:
-                    print '    ', n.path_str('     ')
+                    print '    ', print_stack_item(n, '     ')
             process_reduce_nodes = new_reduce_nodes
             current.extend(new_reduce_nodes)
 
         for node, action in get_by_action_type(current, token, 'A'):
-            print '- %s ACCEPT' % (node,)
+            print '- ACCEPT: (%s)' % (node,)
             accepted_nodes.append(node)
 
         shifted_nodes = []
         for node, action in get_by_action_type(current, token, 'S'):
             shifted_node = stack.shift(node, token, action.state)
-            print '- %s shift to %s => %s' % (node, action.state, shifted_node)
+            print '- SHIFT: (%s) to (%s)  =>  %s' % (node, action.state, shifted_node)
             shifted_nodes.append(shifted_node)
 
         current = shifted_nodes
@@ -273,11 +245,11 @@ def parse(rules, action_goto_table, tokens):
                 merged.append(group[0])
         current = merged
 
-        print
+        print '\n- STACK:'
         for node in current:
-            print node.path_str()
+            print print_stack_item(node)
 
-    print '\n--------------------\nResult:'
+    print '\n--------------------\nACCEPTED:'
     for node in accepted_nodes:
         print_ast(node)
 

@@ -52,6 +52,39 @@ def gen_printable_table(action_table):
     return table
 
 
+def print_stack_item(stack_item, second_line_prefix=''):
+
+    def get_pathes(stack_item):
+        if stack_item.prev:
+            for prev in stack_item.prev:
+                for p in get_pathes(prev):
+                    yield p + [stack_item]
+        else:
+            yield [stack_item]
+
+    if stack_item.prev:
+        pathes = []
+        for path in get_pathes(stack_item):
+            pathes.append(' > '.join(repr(i) for i in path))
+        length = max(len(p) for p in pathes)
+
+        results = []
+        for i, path in enumerate(pathes):
+            result = '' if i == 0 else second_line_prefix
+            result += path.rjust(length)
+            if len(pathes) > 1:
+                if i == 0:
+                    result += ' ╮'
+                elif i != len(pathes) - 1:
+                    result += ' │'
+                else:
+                    result += ' ╯'
+            results.append(result)
+
+        return '\n'.join(results)
+    else:
+        return '0'
+
 
 def gen_ast(node, last=False, prefix = ''):
     line = prefix[:-1]
