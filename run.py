@@ -131,6 +131,37 @@ def tokenize(string):
 class StackItem(namedtuple('StackItem', ['token', 'state', 'reduced', 'prev'])):
     __slots__ = ()
 
+    def pop(self, depth):
+        if depth == 0:
+            return [[self]]
+        if not self.prev:
+            return []
+
+        result = []
+        for prev in self.prev:
+            for path in prev.pop(depth-1):
+                result.append(path + [self])
+        return result
+
+    def shift(self, token, state, reduced=None):
+        return StackItem(token, state, reduced, (self, ))
+
+    def reduce(self, action_goto_table, rule):
+        result = []
+        depth = len(rule.elements)
+        for path in self.pop(depth):
+            goto_actions = action_goto_table[path[0].state][rule.name]
+            # TODO: probably assert that only 1 goto action and it is 'G'
+            for goto_action in goto_actions:
+                if goto_action.type == 'G':
+                    new_head = path[0].shift(Token(rule.name, '', 0, 0), goto_action.state, tuple(path[1:]))
+                    result.append(new_head)
+        return result
+
+    @classmethod
+    def start_new(self):
+        return StackItem(None, 0, None, None)
+
     def __repr__(self):
         if self.prev:
             return '%s.%s' % (self.token, self.state)
@@ -190,12 +221,9 @@ def get_by_action_type(nodes, token, action_type):
 
 # http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=DBFD4413CFAD29BC537FD98959E6B779?doi=10.1.1.39.1262&rep=rep1&type=pdf
 def parse(rules, action_goto_table, tokens):
-    stack = Stack(rules, action_goto_table)
-
-    stack.shift(None, None, 0)
     accepted_nodes = []
 
-    current = stack.heads[:]
+    current = [StackItem.start_new()]
 
     for token in tokens:
         print '\n\nTOKEN:', token
@@ -205,7 +233,8 @@ def parse(rules, action_goto_table, tokens):
             new_reduce_nodes = []
             for node, action in get_by_action_type(process_reduce_nodes, token, 'R'):
                 print '- REDUCE: (%s) by (%s)' % (node, action.rule_index)
-                reduced_nodes = stack.reduce(node, action.rule_index)
+                rule = rules[action.rule_index]
+                reduced_nodes = node.reduce(action_goto_table, rule)
                 new_reduce_nodes.extend(reduced_nodes)
                 for n in reduced_nodes:
                     print '    ', print_stack_item(n, '     ')
@@ -218,7 +247,7 @@ def parse(rules, action_goto_table, tokens):
 
         shifted_nodes = []
         for node, action in get_by_action_type(current, token, 'S'):
-            shifted_node = stack.shift(node, token, action.state)
+            shifted_node = node.shift(token, action.state)
             print '- SHIFT: (%s) to (%s)  =>  %s' % (node, action.state, shifted_node)
             shifted_nodes.append(shifted_node)
 
