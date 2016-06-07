@@ -1,8 +1,10 @@
 # coding=utf8
-from collections import defaultdict, namedtuple
+from collections import defaultdict
+
+from glr.grammar import Rule, Grammar
 from glrengine.scanner import make_scanner
 
-Rule = namedtuple('Rule', ['name', 'elements', 'commit'])
+__all__ = ['parse_grammar']
 
 
 class RuleSet(dict):
@@ -159,3 +161,11 @@ class RuleSet(dict):
                     #
             i += 1
         return must_cleanup
+
+
+def parse_grammar(grammar, kw_set, start_sym='S'):
+    rules = RuleSet(grammar, kw_set, start_sym)
+
+    rules = [rule for rule in rules.values() if not isinstance(rule, set)]
+
+    return Grammar(rules)

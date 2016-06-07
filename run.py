@@ -1,14 +1,12 @@
 # coding=utf-8
-import re
 import sys
-from itertools import groupby
 
+from glr.grammar_parser import parse_grammar
+from glr.lr import generate_tables
 from glr.parser import Parser
 from glr.tokenizer import Token
+from glr.utils import change_state_indexes, print_table, gen_printable_table
 from glrengine import GLRScanner
-from glrengine.lr import *
-from glrengine.utils import gen_printable_table, print_ast, print_stack_item, change_state_indexes
-from glrengine.utils import print_table
 
 dictionaries = {
     u"VARIABLES": [u"A", u"B", u"C"]
@@ -99,14 +97,14 @@ parser_rules = GrammarParser().parse_grammar(grammar, dictionaries)
 #     print k , v
 
 scanner = GLRScanner(**parser_rules)
-rules = RuleSet(grammar, set(scanner.tokens.keys()).union({'$'}), 'S')
+grammar = parse_grammar(grammar, set(scanner.tokens.keys()).union({'$'}), 'S')
 
-for i, r in sorted(rules.items()):
+for i, r in enumerate(grammar.rules):
     if isinstance(i, int):
         print '%2d | %-10s | %s' %(i,r[0],' '.join(r[1]))
 
 # nodes = generate_state_graph(rules)
-action_goto_table = generate_tables(rules)
+action_goto_table = generate_tables(grammar)
 
 action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9, 9:7})
 
@@ -134,7 +132,7 @@ tokens = [
     Token("$", '', 0, 0),
 ]
 
-parser = Parser(rules, action_goto_table)
+parser = Parser(grammar, action_goto_table)
 
 res = parser.parse(tokens)
 #s = res[-1]

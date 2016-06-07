@@ -3,7 +3,7 @@ from collections import defaultdict, OrderedDict
 from collections import namedtuple
 
 from glr.utils import unique
-from glr.rules import RuleSet
+from glr.grammar import Grammar
 
 
 class Item(namedtuple('Item', ['rule_index', 'dot_position'])):
@@ -18,9 +18,9 @@ State = namedtuple('State', ['index', 'itemset', 'follow_dict', 'parent_rule_ind
 Action = namedtuple('Action', ['type', 'state', 'rule_index'])
 
 
-def iterate_lookaheads(itemset, rules):
+def iterate_lookaheads(itemset, grammar):
     for item in itemset:
-        rule = rules[item.rule_index]
+        rule = grammar[item.rule_index]
 
         if item.dot_position == len(rule.elements):
             # dot is in the end, there is no look ahead symbol
@@ -31,13 +31,13 @@ def iterate_lookaheads(itemset, rules):
         yield item, lookahead
 
 
-def follow(itemset, rules):
+def follow(itemset, grammar):
     """
         All transitions from an item set in a dictionary [token]->item set
     """
     result = OrderedDict()
-    for item, lookahead in iterate_lookaheads(itemset, rules):
-        tmp = closure([Item(item.rule_index, item.dot_position + 1)], rules)
+    for item, lookahead in iterate_lookaheads(itemset, grammar):
+        tmp = closure([Item(item.rule_index, item.dot_position + 1)], grammar)
 
         if lookahead not in result:
             result[lookahead] = []
@@ -47,7 +47,7 @@ def follow(itemset, rules):
         yield lookahead, unique(itemset)
 
 
-def closure(itemset, rules):
+def closure(itemset, grammar):
     """
         The epsilon-closure of this item set
     """
@@ -58,10 +58,10 @@ def closure(itemset, rules):
             yield item
 
         nested_to_process = []
-        for item, lookahead in iterate_lookaheads(items_to_process, rules):
-            if lookahead in rules and lookahead not in visited_lookaheads:
+        for item, lookahead in iterate_lookaheads(items_to_process, grammar):
+            if lookahead in grammar.symbols and lookahead not in visited_lookaheads:
                 visited_lookaheads.add(lookahead)
-                for rule_index in rules[lookahead]:  # TODO: get_by_symbol
+                for rule_index in grammar.rules_for_symbol(lookahead):  # TODO: get_by_symbol
                     nested_to_process.append(Item(rule_index, 0))
 
         if not nested_to_process:
@@ -71,14 +71,15 @@ def closure(itemset, rules):
         items_to_process = nested_to_process
 
 
-def generate_state_graph(rules):
-    assert isinstance(rules, RuleSet)
-    print 'Parent          | Next        '
-    print 'St | Lookahead  | St | Itemset'
+def generate_state_graph(grammar):
+    assert isinstance(grammar, Grammar)
+
+    #print 'Parent          | Next        '
+    #print 'St | Lookahead  | St | Itemset'
     states = []
     state_by_itemset = {}
 
-    first_itemset = closure([Item(0, 0)], rules)
+    first_itemset = closure([Item(0, 0)], grammar)
     first_itemset = tuple(sorted(first_itemset))
     stack = [(None, None, first_itemset)]
     while stack:
@@ -100,35 +101,34 @@ def generate_state_graph(rules):
         if parent_state_index is not None:
             states[parent_state_index].follow_dict[parent_lookahead].add(state.index)
 
-        for lookahead, itemset in follow(state.itemset, rules):
+        for lookahead, itemset in follow(state.itemset, grammar):
             itemset = tuple(sorted(itemset))
             stack.append((state.index, lookahead, itemset))
     return states
 
 
-def generate_followers(rules):
-    symbols = unique(e for r in rules.values() if not isinstance(r, set) for e in r.elements)
-    nonterminals = set(s for s in symbols if s in rules)
+def generate_followers(grammar):
+    assert isinstance(grammar, Grammar)
 
     def get_starters(symbol):
         result = []
-        for rule_index in rules[symbol]:  # TODO: use get_by_symbol
-            rule = rules[rule_index]
-            if rule.elements[0] in nonterminals:
+        for rule_index in grammar.rules_for_symbol(symbol):
+            rule = grammar[rule_index]
+            if rule.elements[0] in grammar.nonterminals:
                 if rule.elements[0] != symbol:
                     result.extend(get_starters(rule.elements[0]))
             else:
                 result.append(rule.elements[0])
         return result
 
-    starters = dict((s, set(get_starters(s))) for s in nonterminals)
+    starters = dict((s, set(get_starters(s))) for s in grammar.nonterminals)
 
     def get_followers(symbol, seen_symbols=None):
         seen_symbols = seen_symbols or set()
         seen_symbols.add(symbol)
 
         result = []
-        for rule in rules.values():
+        for rule in grammar.rules:
             if isinstance(rule, set):  # TODO: remove workaround
                 continue
 
@@ -141,19 +141,21 @@ def generate_followers(rules):
                     result.extend(get_followers(rule.name, seen_symbols))
             else:
                 next = rule.elements[index + 1]
-                if next in nonterminals:
+                if next in grammar.nonterminals:
                     result.extend(starters[next])
                 else:
                     result.append(next)
         return result
 
-    followers = dict((s, set(get_followers(s))) for s in nonterminals)
+    followers = dict((s, set(get_followers(s))) for s in grammar.nonterminals)
     return followers
 
 
-def generate_tables(rules):
-    states = generate_state_graph(rules)
-    followers = generate_followers(rules)
+def generate_tables(grammar):
+    assert isinstance(grammar, Grammar)
+
+    states = generate_state_graph(grammar)
+    followers = generate_followers(grammar)
 
     result = []
     for state in states:
@@ -161,7 +163,7 @@ def generate_tables(rules):
 
         # Reduces
         for item in state.itemset:
-            rule = rules[item.rule_index]
+            rule = grammar[item.rule_index]
             if item.dot_position == len(rule.elements):
                 if rule.name == '@':
                     actions['$'].append(Action('A', None, None))
