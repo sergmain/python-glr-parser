@@ -50,3 +50,30 @@ def gen_printable_table(action_table):
             res.append(', '.join('%s%s%s' % (a,s or '',r or '') for a,s,r in row[k]) if k in row else '')
         table.append(res)
     return table
+
+
+
+def gen_ast(node, last=False, prefix = ''):
+    line = prefix[:-1]
+    if prefix:
+        if not last:
+            line += u'├──'
+        else:
+            line += u'╰──'
+    else:
+        line = '  '
+    line += node.token.symbol
+    yield line, node.token.value
+
+    if node.reduced:
+        for i, r in enumerate(node.reduced):
+            last = i==len(node.reduced)-1
+            for line, value in gen_ast(r, last, prefix + ('   ' if last else u'  │')):
+                yield line, value
+
+
+def print_ast(node):
+    ast = list(gen_ast(node))
+    depth = max(len(l) for l, v in ast)
+    for l, v in ast:
+        print l.ljust(depth), v

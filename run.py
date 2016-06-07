@@ -292,10 +292,7 @@ tokens = [
 res = parse(rules, action_goto_table, tokens)
 s = res[-1]
 
-def print_ast(node, prefix = ''):
-    print '%-20s %s' % (prefix + node.token.symbol, node.token.value)
-    if node.reduced:
-        for r in node.reduced:
-            print_ast(r, prefix + '  ')
+
+
 
 print_ast(s)
