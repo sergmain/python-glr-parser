@@ -135,7 +135,7 @@ def tokenize(string):
 #     print t, v, s, e
 
 
-class StackItem(namedtuple('StackItem', ['token', 'state', 'prev'])):
+class StackItem(namedtuple('StackItem', ['token', 'state', 'reduced', 'prev'])):
     __slots__ = ()
 
     def get_pathes(self):
@@ -196,8 +196,8 @@ class Stack(object):
                 result.append(path + [node])
         return result
 
-    def shift(self, head, token, state):
-        new_head = StackItem(token, state, (head, ) if head else None)
+    def shift(self, head, token, state, reduced=None):
+        new_head = StackItem(token, state, reduced, (head, ) if head else None)
         self.heads.append(new_head)
         return new_head
 
@@ -210,7 +210,7 @@ class Stack(object):
             # TODO: probably assert that only 1 goto action and it is 'G'
             for goto_action in goto_actions:
                 if goto_action.action == 'G':
-                    new_head = self.shift(path[0], rule.name, goto_action.state)
+                    new_head = self.shift(path[0], Token(rule.name, '', 0, 0), goto_action.state, tuple(path[1:]))
                     result.append(new_head)
         return result
 
@@ -255,6 +255,8 @@ def parse(rules, action_goto_table, tokens):
             print '- %s shift to %s => %s' % (node, action.state, shifted_node)
             shifted_nodes.append(shifted_node)
 
+        if not shifted_nodes:
+            return current
         current = shifted_nodes
 
         merged = []
@@ -262,7 +264,7 @@ def parse(rules, action_goto_table, tokens):
             group = [g for g in group]
             if len(group) > 1:
                 all_prevs = tuple(p for node in group for p in node.prev)
-                merged.append(StackItem(key[0], key[1], all_prevs))
+                merged.append(StackItem(key[0], key[1], None, all_prevs))
             else:
                 merged.append(group[0])
         current = merged
@@ -271,6 +273,7 @@ def parse(rules, action_goto_table, tokens):
         print
         for node in current:
             print node.path_str()
+
 
 tokens = [
     Token('n', 'I', 0, 0),
@@ -286,4 +289,13 @@ tokens = [
     Token("$", '', 0, 0),
 ]
 
-parse(rules, action_goto_table, tokens)
+res = parse(rules, action_goto_table, tokens)
+s = res[-1]
+
+def print_ast(node, prefix = ''):
+    print '%-20s %s' % (prefix + node.token.symbol, node.token.value)
+    if node.reduced:
+        for r in node.reduced:
+            print_ast(r, prefix + '  ')
+
+print_ast(s)
