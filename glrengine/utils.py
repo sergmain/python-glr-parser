@@ -76,4 +76,4 @@ def print_ast(node):
     ast = list(gen_ast(node))
     depth = max(len(l) for l, v in ast)
     for l, v in ast:
-        print l.ljust(depth,u'─' if v else u' '), v
+        print l.ljust(depth,u'.' if v else u' '), v

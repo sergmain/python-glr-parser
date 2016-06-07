@@ -227,13 +227,15 @@ def get_by_action_type(nodes, token, action_type):
             if action.action == action_type:
                 yield node, action
 
+# http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=DBFD4413CFAD29BC537FD98959E6B779?doi=10.1.1.39.1262&rep=rep1&type=pdf
 def parse(rules, action_goto_table, tokens):
     stack = Stack(rules, action_goto_table)
 
     stack.shift(None, None, 0)
+    accepted_nodes = []
 
     current = stack.heads[:]
-    print current
+
     for token in tokens:
         print '\n\nToken', token
 
@@ -249,31 +251,37 @@ def parse(rules, action_goto_table, tokens):
             process_reduce_nodes = new_reduce_nodes
             current.extend(new_reduce_nodes)
 
+        for node, action in get_by_action_type(current, token, 'A'):
+            print '- %s ACCEPT' % (node,)
+            accepted_nodes.append(node)
+
         shifted_nodes = []
         for node, action in get_by_action_type(current, token, 'S'):
             shifted_node = stack.shift(node, token, action.state)
             print '- %s shift to %s => %s' % (node, action.state, shifted_node)
             shifted_nodes.append(shifted_node)
 
-        if not shifted_nodes:
-            return current
         current = shifted_nodes
 
         merged = []
-        for key, group in groupby(sorted(current), lambda si: (si.token, si.state)):
+        for key, group in groupby(sorted(current), lambda si: (si.token, si.state, si.reduced)):
             group = [g for g in group]
             if len(group) > 1:
                 all_prevs = tuple(p for node in group for p in node.prev)
-                merged.append(StackItem(key[0], key[1], None, all_prevs))
+                merged.append(StackItem(key[0], key[1], key[2], all_prevs))
             else:
                 merged.append(group[0])
         current = merged
-
 
         print
         for node in current:
             print node.path_str()
 
+    print '\n--------------------\nResult:'
+    for node in accepted_nodes:
+        print_ast(node)
+
+    return accepted_nodes
 
 tokens = [
     Token('n', 'I', 0, 0),
@@ -290,9 +298,5 @@ tokens = [
 ]
 
 res = parse(rules, action_goto_table, tokens)
-s = res[-1]
-
-
-
-
-print_ast(s)
+#s = res[-1]
+#print_ast(s)
