@@ -10,6 +10,15 @@ class Item(namedtuple('Item', ['rule_index', 'dot_position'])):
         return '#%d.%d' % self
 
 
+def itemstr():
+    pass
+def itemsetstr():
+    pass
+def first():
+    pass
+def kernel():
+    pass
+
 def iterate_lookaheads(itemset, rules):
     for item in itemset:
         rule = rules[item.rule_index]

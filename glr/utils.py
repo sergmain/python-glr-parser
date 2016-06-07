@@ -1,5 +1,8 @@
 # coding=utf-8
-from glrengine.lr import unique, Action
+def unique(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
 
 
 def print_table(table, buf):
@@ -47,13 +50,12 @@ def gen_printable_table(action_table):
     for i, row in enumerate(action_table):
         res = [i]
         for k in symbols:
-            res.append(', '.join('%s%s%s' % (a,s or '',r or '') for a,s,r in row[k]) if k in row else '')
+            res.append(', '.join('%s%s%s' % (a, s or '', r or '') for a, s, r in row[k]) if k in row else '')
         table.append(res)
     return table
 
 
 def print_stack_item(stack_item, second_line_prefix=''):
-
     def get_pathes(stack_item):
         if stack_item.prev:
             for prev in stack_item.prev:
@@ -86,7 +88,7 @@ def print_stack_item(stack_item, second_line_prefix=''):
         return '0'
 
 
-def gen_ast(node, last=False, prefix = ''):
+def gen_ast(node, last=False, prefix=''):
     line = prefix[:-1]
     if prefix:
         if not last:
@@ -100,7 +102,7 @@ def gen_ast(node, last=False, prefix = ''):
 
     if node.reduced:
         for i, r in enumerate(node.reduced):
-            last = i==len(node.reduced)-1
+            last = i == len(node.reduced) - 1
             for line, value in gen_ast(r, last, prefix + ('   ' if last else u'  │')):
                 yield line, value
 
@@ -109,18 +111,20 @@ def print_ast(node):
     ast = list(gen_ast(node))
     depth = max(len(l) for l, v in ast)
     for l, v in ast:
-        print l.ljust(depth,u'.' if v else u' '), v
+        print l.ljust(depth, u'.' if v else u' '), v
 
 
 def change_state_indexes(table, mapping):
-    '''
+    """
     Keeps table logically same, but updates rule indexes by switching mapping pairs
     :param table:
     :param mapping:
     :return:
-    '''
-    reverse_map = dict((v,k) for k,v in mapping.items())
-    result = [table[reverse_map.get(i,i)] for i in range(len(table))]
+    """
+    from lr import Action
+
+    reverse_map = dict((v, k) for k, v in mapping.items())
+    result = [table[reverse_map.get(i, i)] for i in range(len(table))]
     for row in result:
         for symbol, actions in row.items():
             for i, action in enumerate(actions):

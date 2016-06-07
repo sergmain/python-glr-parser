@@ -2,12 +2,20 @@
 from collections import defaultdict, OrderedDict
 from collections import namedtuple
 
-from glrengine.rules import RuleSet
+from glr.utils import unique
+from glr.rules import RuleSet
+
 
 class Item(namedtuple('Item', ['rule_index', 'dot_position'])):
     __slots__ = ()
+
     def __repr__(self):
         return '#%d.%d' % self
+
+
+Node = namedtuple('Node', ['index', 'itemset', 'follow_dict', 'parent_rule_index', 'parent_lookahead'])
+
+Action = namedtuple('Action', ['type', 'state', 'rule_index'])
 
 
 def iterate_lookaheads(itemset, rules):
@@ -21,12 +29,6 @@ def iterate_lookaheads(itemset, rules):
         lookahead = rule.elements[item.dot_position]
 
         yield item, lookahead
-
-
-def unique(seq):
-    seen = set()
-    seen_add = seen.add
-    return [x for x in seq if not (x in seen or seen_add(x))]
 
 
 def follow(itemset, rules):
@@ -59,7 +61,7 @@ def closure(itemset, rules):
         for item, lookahead in iterate_lookaheads(items_to_process, rules):
             if lookahead in rules and lookahead not in visited_lookaheads:
                 visited_lookaheads.add(lookahead)
-                for rule_index in rules[lookahead]: # TODO: get_by_symbol
+                for rule_index in rules[lookahead]:  # TODO: get_by_symbol
                     nested_to_process.append(Item(rule_index, 0))
 
         if not nested_to_process:
@@ -67,10 +69,6 @@ def closure(itemset, rules):
             return
 
         items_to_process = nested_to_process
-
-
-Node = namedtuple('Node', ['index', 'itemset', 'follow_dict', 'parent_rule_index', 'parent_lookahead'])
-Action = namedtuple('Action', ['type', 'state', 'rule_index'])
 
 
 def generate_state_graph(rules):
@@ -90,14 +88,14 @@ def generate_state_graph(rules):
             # State already exist, just add follow link
             node = node_by_itemset[itemset]
             nodes[parent_node_index].follow_dict[parent_lookahead].add(node.index)
-            #print '%2s | %-10s | %2d | %s' % (parent_node_index, parent_lookahead, node.index, '')
+            # print '%2s | %-10s | %2d | %s' % (parent_node_index, parent_lookahead, node.index, '')
             continue
 
         node = Node(len(nodes), itemset, defaultdict(set), parent_node_index, parent_lookahead)
         nodes.append(node)
         node_by_itemset[node.itemset] = node
 
-        #print '%2s | %-10s | %2d | %s' % (parent_node_index or 0, parent_lookahead or '', node.index, node.itemset)
+        # print '%2s | %-10s | %2d | %s' % (parent_node_index or 0, parent_lookahead or '', node.index, node.itemset)
 
         if parent_node_index is not None:
             nodes[parent_node_index].follow_dict[parent_lookahead].add(node.index)
@@ -142,7 +140,7 @@ def generate_followers(rules):
                 if rule.name != symbol and rule.name not in seen_symbols:
                     result.extend(get_followers(rule.name, seen_symbols))
             else:
-                next = rule.elements[index+1]
+                next = rule.elements[index + 1]
                 if next in nonterminals:
                     result.extend(starters[next])
                 else:

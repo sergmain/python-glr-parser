@@ -3,6 +3,8 @@ import re
 import sys
 from itertools import groupby
 
+from glr.parser import Parser
+from glr.tokenizer import Token
 from glrengine import GLRScanner
 from glrengine.lr import *
 from glrengine.utils import gen_printable_table, print_ast, print_stack_item, change_state_indexes
@@ -110,132 +112,13 @@ action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9,
 
 print_table(gen_printable_table(action_goto_table), sys.stdout)
 
-class Token(namedtuple('Token', ['symbol', 'value', 'start', 'end'])):
-    __slots__ = ()
-    def __repr__(self):
-        return '%s' % self.symbol
-
-def tokenize(string):
-    split_re = re.compile('(?:(?P<alpha>[^\W\d_]+)|(?P<space>\s+)|(?P<digit>\d+)|(?P<punct>[^\w\s]|_))', re.U)
-    for m in split_re.finditer(string):
-        yield Token(m.lastgroup, m.group(m.lastgroup), m.start(), m.end())
-
 # for t, v, s, e in tokenize(u'Кронштейн f0a f_n КАМАЗ 20т. (На 5320,740-15)'):
 #     print t, v, s, e
-
-
-
-
-
-
-class StackItem(namedtuple('StackItem', ['token', 'state', 'reduced', 'prev'])):
-    __slots__ = ()
-
-    def pop(self, depth):
-        if depth == 0:
-            return [[self]]
-        if not self.prev:
-            return []
-
-        result = []
-        for prev in self.prev:
-            for path in prev.pop(depth-1):
-                result.append(path + [self])
-        return result
-
-    def shift(self, token, state, reduced=None):
-        return StackItem(token, state, reduced, (self, ))
-
-    def reduce(self, action_goto_table, rule):
-        result = []
-        depth = len(rule.elements)
-        for path in self.pop(depth):
-            goto_actions = action_goto_table[path[0].state][rule.name]
-            # TODO: probably assert that only 1 goto action and it is 'G'
-            for goto_action in goto_actions:
-                if goto_action.type == 'G':
-                    new_head = path[0].shift(Token(rule.name, '', 0, 0), goto_action.state, tuple(path[1:]))
-                    result.append(new_head)
-        return result
-
-    @classmethod
-    def merge(self, stack_items):
-        for key, group in groupby(sorted(stack_items), lambda si: (si.token, si.state, si.reduced)):
-            group = [g for g in group]
-            if len(group) > 1:
-                all_prevs = tuple(p for stack_item in group for p in stack_item.prev)
-                yield StackItem(key[0], key[1], key[2], all_prevs)
-            else:
-                yield group[0]
-
-    @classmethod
-    def start_new(self):
-        return StackItem(None, 0, None, None)
-
-    def __repr__(self):
-        if self.prev:
-            return '%s.%s' % (self.token, self.state)
-        else:
-            return '0'
-
-
 
 #TODO: rename Rule.name -> left_symbol
 #TODO: rename Rule.elements -> right_symbols
 
 
-def get_by_action_type(nodes, token, action_type):
-    for node in nodes:
-        node_actions = action_goto_table[node.state][token.symbol]
-        for action in node_actions:
-            if action.type == action_type:
-                yield node, action
-
-# http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=DBFD4413CFAD29BC537FD98959E6B779?doi=10.1.1.39.1262&rep=rep1&type=pdf
-def parse(rules, action_goto_table, tokens):
-    accepted_nodes = []
-
-    current = [StackItem.start_new()]
-
-    for token in tokens:
-        print '\n\nTOKEN:', token
-
-        process_reduce_nodes = current[:]
-        while process_reduce_nodes:
-            new_reduce_nodes = []
-            for node, action in get_by_action_type(process_reduce_nodes, token, 'R'):
-                print '- REDUCE: (%s) by (%s)' % (node, action.rule_index)
-                rule = rules[action.rule_index]
-                reduced_nodes = node.reduce(action_goto_table, rule)
-                new_reduce_nodes.extend(reduced_nodes)
-                for n in reduced_nodes:
-                    print '    ', print_stack_item(n, '     ')
-            process_reduce_nodes = new_reduce_nodes
-            current.extend(new_reduce_nodes)
-
-        for node, action in get_by_action_type(current, token, 'A'):
-            print '- ACCEPT: (%s)' % (node,)
-            accepted_nodes.append(node)
-
-        shifted_nodes = []
-        for node, action in get_by_action_type(current, token, 'S'):
-            shifted_node = node.shift(token, action.state)
-            print '- SHIFT: (%s) to (%s)  =>  %s' % (node, action.state, shifted_node)
-            shifted_nodes.append(shifted_node)
-
-        current = shifted_nodes
-
-        current = list(StackItem.merge(current))
-
-        print '\n- STACK:'
-        for node in current:
-            print print_stack_item(node)
-
-    print '\n--------------------\nACCEPTED:'
-    for node in accepted_nodes:
-        print_ast(node)
-
-    return accepted_nodes
 
 tokens = [
     Token('n', 'I', 0, 0),
@@ -251,6 +134,8 @@ tokens = [
     Token("$", '', 0, 0),
 ]
 
-res = parse(rules, action_goto_table, tokens)
+parser = Parser(rules, action_goto_table)
+
+res = parser.parse(tokens)
 #s = res[-1]
 #print_ast(s)

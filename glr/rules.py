@@ -4,6 +4,7 @@ from glrengine.scanner import make_scanner
 
 Rule = namedtuple('Rule', ['name', 'elements', 'commit'])
 
+
 class RuleSet(dict):
     lr_grammar_scanner = make_scanner(
         sep='=',
@@ -75,7 +76,7 @@ class RuleSet(dict):
             rules = sorted(self[i] for i in xrange(self.rules_count) if self[i] is not None)
             epsilons = self.__fill(rules)
             if epsilons:
-                #print "D'oh ! I left epsilon rules in there !", epsilons
+                # print "D'oh ! I left epsilon rules in there !", epsilons
                 raise Exception("There is a bug ! There is a bug ! " +
                                 "Failed to refactor this grammar into " +
                                 "an epsilon-free one !")
@@ -90,7 +91,7 @@ class RuleSet(dict):
                 self.__add(rulename, elems, commit, labels)
             else:
                 epsilons.add(rulename)
-        #print 'found epsilon rules', epsilons
+        # print 'found epsilon rules', epsilons
         return epsilons
 
     def __add(self, rulename, elems, commit, labels):
@@ -105,7 +106,7 @@ class RuleSet(dict):
             self.rules_count += 1
 
     def __add_epsilon_free(self, eps, epsilons):
-        #print "Adding", eps, "-free variants"
+        # print "Adding", eps, "-free variants"
         i = 0
         while i < self.rules_count:
             if self[i] is None:
@@ -113,7 +114,7 @@ class RuleSet(dict):
                 continue
             rulename, elems, commit = self[i]
             if eps in elems:
-                #print "... to", rulename, elems
+                # print "... to", rulename, elems
                 E = set([elems])
                 old = 0
                 while len(E) != old:
@@ -122,10 +123,10 @@ class RuleSet(dict):
                                 for elems in E
                                 for i in xrange(len(elems))
                                 if elems[i] == eps)
-                #print "Created variants", E
+                # print "Created variants", E
                 for elems in E:
                     if len(elems) == 0:
-                        #print "got new epsilon rule", rulename
+                        # print "got new epsilon rule", rulename
                         epsilons.add(rulename)
                     else:
                         self.__add(rulename, elems, commit, [])
@@ -152,10 +153,9 @@ class RuleSet(dict):
                         del self[rulename]
                     must_cleanup = True
                     epsilons.add(rulename)
-                    #print "epsilon removal created new epsilon rule", rulename
+                    # print "epsilon removal created new epsilon rule", rulename
                 else:
                     self[i] = Rule(rulename, elems, commit)
                     #
             i += 1
         return must_cleanup
-
