@@ -159,6 +159,16 @@ class StackItem(namedtuple('StackItem', ['token', 'state', 'reduced', 'prev'])):
         return result
 
     @classmethod
+    def merge(self, stack_items):
+        for key, group in groupby(sorted(stack_items), lambda si: (si.token, si.state, si.reduced)):
+            group = [g for g in group]
+            if len(group) > 1:
+                all_prevs = tuple(p for stack_item in group for p in stack_item.prev)
+                yield StackItem(key[0], key[1], key[2], all_prevs)
+            else:
+                yield group[0]
+
+    @classmethod
     def start_new(self):
         return StackItem(None, 0, None, None)
 
@@ -167,44 +177,6 @@ class StackItem(namedtuple('StackItem', ['token', 'state', 'reduced', 'prev'])):
             return '%s.%s' % (self.token, self.state)
         else:
             return '0'
-
-class Stack(object):
-
-    def __init__(self, rules, action_goto_table):
-        self.rules = rules
-        self.action_goto_table = action_goto_table
-
-        self.heads = []
-
-    def pop(self, node, depth):
-        if depth == 0:
-            return [[node]]
-        if not node.prev:
-            return []
-
-        result = []
-        for prev in node.prev:
-            for path in self.pop(prev, depth-1):
-                result.append(path + [node])
-        return result
-
-    def shift(self, head, token, state, reduced=None):
-        new_head = StackItem(token, state, reduced, (head, ) if head else None)
-        self.heads.append(new_head)
-        return new_head
-
-    def reduce(self, head, rule_index):
-        result = []
-        rule = self.rules[rule_index]
-        depth = len(rule.elements)
-        for path in self.pop(head, depth):
-            goto_actions = self.action_goto_table[path[0].state][rule.name]
-            # TODO: probably assert that only 1 goto action and it is 'G'
-            for goto_action in goto_actions:
-                if goto_action.type == 'G':
-                    new_head = self.shift(path[0], Token(rule.name, '', 0, 0), goto_action.state, tuple(path[1:]))
-                    result.append(new_head)
-        return result
 
 
 
@@ -253,15 +225,7 @@ def parse(rules, action_goto_table, tokens):
 
         current = shifted_nodes
 
-        merged = []
-        for key, group in groupby(sorted(current), lambda si: (si.token, si.state, si.reduced)):
-            group = [g for g in group]
-            if len(group) > 1:
-                all_prevs = tuple(p for node in group for p in node.prev)
-                merged.append(StackItem(key[0], key[1], key[2], all_prevs))
-            else:
-                merged.append(group[0])
-        current = merged
+        current = list(StackItem.merge(current))
 
         print '\n- STACK:'
         for node in current:

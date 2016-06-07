@@ -1,6 +1,6 @@
 # coding=utf8
 from collections import defaultdict, namedtuple
-from scanner import make_scanner
+from glrengine.scanner import make_scanner
 
 Rule = namedtuple('Rule', ['name', 'elements', 'commit'])
 
