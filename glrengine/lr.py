@@ -99,14 +99,14 @@ def generate_state_graph(rules):
             # State already exist, just add follow link
             node = node_by_itemset[itemset]
             nodes[parent_node_index].follow_dict[parent_lookahead].add(node.index)
-            print '%2s | %-10s | %2d | %s' % (parent_node_index, parent_lookahead, node.index, '')
+            #print '%2s | %-10s | %2d | %s' % (parent_node_index, parent_lookahead, node.index, '')
             continue
 
         node = Node(len(nodes), itemset, defaultdict(set), parent_node_index, parent_lookahead)
         nodes.append(node)
         node_by_itemset[node.itemset] = node
 
-        print '%2s | %-10s | %2d | %s' % (parent_node_index or 0, parent_lookahead or '', node.index, node.itemset)
+        #print '%2s | %-10s | %2d | %s' % (parent_node_index or 0, parent_lookahead or '', node.index, node.itemset)
 
         if parent_node_index is not None:
             nodes[parent_node_index].follow_dict[parent_lookahead].add(node.index)
