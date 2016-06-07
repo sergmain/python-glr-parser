@@ -1,11 +1,14 @@
+from glr.grammar import Grammar
+from glr.lr import generate_tables
 from glr.stack import StackItem
 from glr.utils import print_stack_item, print_ast
 
 
 class Parser(object):
-    def __init__(self, rules, action_goto_table):
-        self.rules = rules
-        self.action_goto_table = action_goto_table
+    def __init__(self, grammar):
+        assert isinstance(grammar, Grammar)
+        self.grammar = grammar
+        self.action_goto_table = generate_tables(self.grammar)
 
     def get_by_action_type(self, nodes, token, action_type):
         for node in nodes:
@@ -28,7 +31,7 @@ class Parser(object):
                 new_reduce_nodes = []
                 for node, action in self.get_by_action_type(process_reduce_nodes, token, 'R'):
                     print '- REDUCE: (%s) by (%s)' % (node, action.rule_index)
-                    rule = self.rules[action.rule_index]
+                    rule = self.grammar[action.rule_index]
                     reduced_nodes = node.reduce(self.action_goto_table, rule)
                     new_reduce_nodes.extend(reduced_nodes)
                     for n in reduced_nodes:

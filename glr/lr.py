@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from collections import defaultdict, OrderedDict
-from collections import namedtuple
+from collections import namedtuple, defaultdict, OrderedDict
 
 from glr.utils import unique
 from glr.grammar import Grammar

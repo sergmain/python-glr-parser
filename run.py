@@ -132,7 +132,7 @@ tokens = [
     Token("$", '', 0, 0),
 ]
 
-parser = Parser(grammar, action_goto_table)
+parser = Parser(grammar)
 
 res = parser.parse(tokens)
 #s = res[-1]
