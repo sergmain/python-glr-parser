@@ -79,7 +79,7 @@ def closure(itemset, rules):
 
 
 Node = namedtuple('Node', ['index', 'itemset', 'follow_dict', 'parent_rule_index', 'parent_lookahead'])
-Action = namedtuple('Action', ['action', 'state', 'rule_index'])
+Action = namedtuple('Action', ['type', 'state', 'rule_index'])
 
 
 def generate_state_graph(rules):

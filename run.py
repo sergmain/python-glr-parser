@@ -114,7 +114,7 @@ def change_state_indexes(table, mapping):
         for symbol, actions in row.items():
             for i, action in enumerate(actions):
                 if action.state in mapping:
-                    actions[i] = Action(action.action, mapping[action.state], action.rule_index)
+                    actions[i] = Action(action.type, mapping[action.state], action.rule_index)
     return result
 
 action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9, 9:7})
@@ -181,7 +181,7 @@ class Stack(object):
             goto_actions = self.action_goto_table[path[0].state][rule.name]
             # TODO: probably assert that only 1 goto action and it is 'G'
             for goto_action in goto_actions:
-                if goto_action.action == 'G':
+                if goto_action.type == 'G':
                     new_head = self.shift(path[0], Token(rule.name, '', 0, 0), goto_action.state, tuple(path[1:]))
                     result.append(new_head)
         return result
@@ -196,7 +196,7 @@ def get_by_action_type(nodes, token, action_type):
     for node in nodes:
         node_actions = action_goto_table[node.state][token.symbol]
         for action in node_actions:
-            if action.action == action_type:
+            if action.type == action_type:
                 yield node, action
 
 # http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=DBFD4413CFAD29BC537FD98959E6B779?doi=10.1.1.39.1262&rep=rep1&type=pdf
