@@ -22,11 +22,11 @@ def iterate_lookaheads(itemset, grammar):
     for item in itemset:
         rule = grammar[item.rule_index]
 
-        if item.dot_position == len(rule.elements):
+        if item.dot_position == len(rule.right_symbols):
             # dot is in the end, there is no look ahead symbol
             continue
 
-        lookahead = rule.elements[item.dot_position]
+        lookahead = rule.right_symbols[item.dot_position]
 
         yield item, lookahead
 
@@ -114,11 +114,11 @@ def generate_followers(grammar):
         result = []
         for rule_index in grammar.rules_for_symbol(symbol):
             rule = grammar[rule_index]
-            if rule.elements[0] in grammar.nonterminals:
-                if rule.elements[0] != symbol:
-                    result.extend(get_starters(rule.elements[0]))
+            if rule.right_symbols[0] in grammar.nonterminals:
+                if rule.right_symbols[0] != symbol:
+                    result.extend(get_starters(rule.right_symbols[0]))
             else:
-                result.append(rule.elements[0])
+                result.append(rule.right_symbols[0])
         return result
 
     starters = dict((s, set(get_starters(s))) for s in grammar.nonterminals)
@@ -132,15 +132,15 @@ def generate_followers(grammar):
             if isinstance(rule, set):  # TODO: remove workaround
                 continue
 
-            if symbol not in rule.elements:
+            if symbol not in rule.right_symbols:
                 continue
 
-            index = rule.elements.index(symbol)
-            if index + 1 == len(rule.elements):
+            index = rule.right_symbols.index(symbol)
+            if index + 1 == len(rule.right_symbols):
                 if rule.name != symbol and rule.name not in seen_symbols:
                     result.extend(get_followers(rule.name, seen_symbols))
             else:
-                next = rule.elements[index + 1]
+                next = rule.right_symbols[index + 1]
                 if next in grammar.nonterminals:
                     result.extend(starters[next])
                 else:
@@ -164,7 +164,7 @@ def generate_tables(grammar):
         # Reduces
         for item in state.itemset:
             rule = grammar[item.rule_index]
-            if item.dot_position == len(rule.elements):
+            if item.dot_position == len(rule.right_symbols):
                 if rule.name == '@':
                     actions['$'].append(Action('A', None, None))
                 else:

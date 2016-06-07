@@ -24,7 +24,7 @@ class StackItem(namedtuple('StackItem', ['token', 'state', 'reduced', 'prev'])):
 
     def reduce(self, action_goto_table, rule):
         result = []
-        depth = len(rule.elements)
+        depth = len(rule.right_symbols)
         for path in self.pop(depth):
             goto_actions = action_goto_table[path[0].state][rule.name]
             # TODO: probably assert that only 1 goto action and it is 'G'

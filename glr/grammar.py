@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from glr.utils import unique
 
-Rule = namedtuple('Rule', ['name', 'elements', 'commit'])
+Rule = namedtuple('Rule', ['name', 'right_symbols', 'commit'])
 
 
 class Grammar(object):
@@ -12,10 +12,10 @@ class Grammar(object):
         self._rules_for_symbol = dict()
         for rule in rules:
             self._rules_for_symbol.setdefault(rule.name, set()).add(self._rules.index(rule))
-            for symbol in rule.elements:
+            for symbol in rule.right_symbols:
                 self._rules_for_symbol.setdefault(symbol, set()).add(self._rules.index(rule))
 
-        self._symbols = unique(symbol for rule in self._rules for symbol in rule.elements)
+        self._symbols = unique(symbol for rule in self._rules for symbol in rule.right_symbols)
         self._nonterminals = set(rule.name for rule in self._rules)
         self._terminals = set(symbol for symbol in self._symbols if symbol not in self._nonterminals)
 
