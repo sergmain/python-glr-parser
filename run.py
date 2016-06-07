@@ -153,11 +153,20 @@ class StackItem(namedtuple('StackItem', ['token', 'state', 'prev'])):
                 pathes.append(' > '.join(repr(i) for i in path))
             length = max(len(p) for p in pathes)
 
-            return '\n'.join(
-                ('' if i == 0 else second_line_prefix)
-                + p.rjust(length)
-                + (' ╮' if i == 0 else ' │' if i!=len(pathes)-1 else ' ╯') if len(pathes) > 1 else ''
-                for i, p in enumerate(pathes))
+            results = []
+            for i, path in enumerate(pathes):
+                result = '' if i == 0 else second_line_prefix
+                result += path.rjust(length)
+                if len(pathes) > 1:
+                    if i == 0:
+                        result += ' ╮'
+                    elif i!=len(pathes)-1:
+                        result += ' │'
+                    else:
+                        result += ' ╯'
+                results.append(result)
+
+            return '\n'.join(results)
         else:
             return '0'
 
@@ -232,7 +241,7 @@ def parse(rules, action_goto_table, tokens):
                         reduced_nodes = stack.reduce(node, action.rule_index)
                         new_reduce_nodes.extend(reduced_nodes)
                         for n in reduced_nodes:
-                            print '- + ', n.path_str('     ')
+                            print '    ', n.path_str('     ')
             process_reduce_nodes = new_reduce_nodes
             current.extend(new_reduce_nodes)
 
@@ -272,7 +281,8 @@ tokens = [
     Token("n", 'apartment', 0, 0),
     Token("prep", 'with', 0, 0),
     Token("det", 'a', 0, 0),
-    Token("n", 'telescope', 0, 0)
+    Token("n", 'telescope', 0, 0),
+    Token("$", '', 0, 0),
 ]
 
 parse(rules, action_goto_table, tokens)
