@@ -137,8 +137,8 @@ def generate_followers(grammar):
 
             index = rule.right_symbols.index(symbol)
             if index + 1 == len(rule.right_symbols):
-                if rule.name != symbol and rule.name not in seen_symbols:
-                    result.extend(get_followers(rule.name, seen_symbols))
+                if rule.left_symbol != symbol and rule.left_symbol not in seen_symbols:
+                    result.extend(get_followers(rule.left_symbol, seen_symbols))
             else:
                 next = rule.right_symbols[index + 1]
                 if next in grammar.nonterminals:
@@ -165,10 +165,10 @@ def generate_tables(grammar):
         for item in state.itemset:
             rule = grammar[item.rule_index]
             if item.dot_position == len(rule.right_symbols):
-                if rule.name == '@':
+                if rule.left_symbol == '@':
                     actions['$'].append(Action('A', None, None))
                 else:
-                    for follower in followers[rule.name]:
+                    for follower in followers[rule.left_symbol]:
                         actions[follower].append(Action('R', None, item.rule_index))
                     actions['$'].append(Action('R', None, item.rule_index))
 

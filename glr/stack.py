@@ -26,11 +26,11 @@ class StackItem(namedtuple('StackItem', ['token', 'state', 'reduced', 'prev'])):
         result = []
         depth = len(rule.right_symbols)
         for path in self.pop(depth):
-            goto_actions = action_goto_table[path[0].state][rule.name]
+            goto_actions = action_goto_table[path[0].state][rule.left_symbol]
             # TODO: probably assert that only 1 goto action and it is 'G'
             for goto_action in goto_actions:
                 if goto_action.type == 'G':
-                    new_head = path[0].shift(Token(rule.name, '', 0, 0), goto_action.state, tuple(path[1:]))
+                    new_head = path[0].shift(Token(rule.left_symbol, '', 0, 0), goto_action.state, tuple(path[1:]))
                     result.append(new_head)
         return result
 
