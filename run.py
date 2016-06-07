@@ -5,7 +5,7 @@ from itertools import groupby
 
 from glrengine import GLRScanner
 from glrengine.lr import *
-from glrengine.utils import gen_printable_table
+from glrengine.utils import gen_printable_table, print_ast
 from glrengine.utils import print_table
 
 dictionaries = {
