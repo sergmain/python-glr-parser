@@ -220,6 +220,13 @@ class Stack(object):
 #TODO: rename Rule.elements -> right_symbols
 
 
+def get_by_action_type(nodes, token, action_type):
+    for node in nodes:
+        node_actions = action_goto_table[node.state][token.symbol]
+        for action in node_actions:
+            if action.action == action_type:
+                yield node, action
+
 def parse(rules, action_goto_table, tokens):
     stack = Stack(rules, action_goto_table)
 
@@ -233,26 +240,20 @@ def parse(rules, action_goto_table, tokens):
         process_reduce_nodes = current[:]
         while process_reduce_nodes:
             new_reduce_nodes = []
-            for node in process_reduce_nodes:
-                node_actions = action_goto_table[node.state][token.symbol]
-                for action in node_actions:
-                    if action.action == 'R':
-                        print '- %s reduce by %s' % (node, action.rule_index)
-                        reduced_nodes = stack.reduce(node, action.rule_index)
-                        new_reduce_nodes.extend(reduced_nodes)
-                        for n in reduced_nodes:
-                            print '    ', n.path_str('     ')
+            for node, action in get_by_action_type(process_reduce_nodes, token, 'R'):
+                print '- %s reduce by %s' % (node, action.rule_index)
+                reduced_nodes = stack.reduce(node, action.rule_index)
+                new_reduce_nodes.extend(reduced_nodes)
+                for n in reduced_nodes:
+                    print '    ', n.path_str('     ')
             process_reduce_nodes = new_reduce_nodes
             current.extend(new_reduce_nodes)
 
         shifted_nodes = []
-        for node in current:
-            node_actions = action_goto_table[node.state][token.symbol]
-            for action in node_actions:
-                if action.action == 'S':
-                    shifted_node = stack.shift(node, token, action.state)
-                    print '- %s shift to %s => %s' % (node, action.state, shifted_node)
-                    shifted_nodes.append(shifted_node)
+        for node, action in get_by_action_type(current, token, 'S'):
+            shifted_node = stack.shift(node, token, action.state)
+            print '- %s shift to %s => %s' % (node, action.state, shifted_node)
+            shifted_nodes.append(shifted_node)
 
         current = shifted_nodes
 
