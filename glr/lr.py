@@ -58,7 +58,7 @@ def closure(itemset, grammar):
 
         nested_to_process = []
         for item, lookahead in iterate_lookaheads(items_to_process, grammar):
-            if lookahead in grammar.symbols and lookahead not in visited_lookaheads:
+            if lookahead in grammar.nonterminals and lookahead not in visited_lookaheads:
                 visited_lookaheads.add(lookahead)
                 for rule_index in grammar.rules_for_symbol(lookahead):  # TODO: get_by_symbol
                     nested_to_process.append(Item(rule_index, 0))
@@ -73,8 +73,9 @@ def closure(itemset, grammar):
 def generate_state_graph(grammar):
     assert isinstance(grammar, Grammar)
 
-    #print 'Parent          | Next        '
-    #print 'St | Lookahead  | St | Itemset'
+    # print 'Parent          | Next        '
+    # print 'St | Lookahead  | St | Itemset'
+
     states = []
     state_by_itemset = {}
 

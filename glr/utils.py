@@ -50,7 +50,7 @@ def gen_printable_table(action_table):
     for i, row in enumerate(action_table):
         res = [i]
         for k in symbols:
-            res.append(', '.join('%s%s%s' % (a, s or '', r or '') for a, s, r in row[k]) if k in row else '')
+            res.append(', '.join('%s%s%s' % (a if a != 'G' else '', s or '', r or '') for a, s, r in row[k]) if k in row else '')
         table.append(res)
     return table
 
