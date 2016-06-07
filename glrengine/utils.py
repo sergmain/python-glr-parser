@@ -1,5 +1,5 @@
 # coding=utf-8
-from glrengine.lr import unique
+from glrengine.lr import unique, Action
 
 
 def print_table(table, buf):
@@ -110,3 +110,20 @@ def print_ast(node):
     depth = max(len(l) for l, v in ast)
     for l, v in ast:
         print l.ljust(depth,u'.' if v else u' '), v
+
+
+def change_state_indexes(table, mapping):
+    '''
+    Keeps table logically same, but updates rule indexes by switching mapping pairs
+    :param table:
+    :param mapping:
+    :return:
+    '''
+    reverse_map = dict((v,k) for k,v in mapping.items())
+    result = [table[reverse_map.get(i,i)] for i in range(len(table))]
+    for row in result:
+        for symbol, actions in row.items():
+            for i, action in enumerate(actions):
+                if action.state in mapping:
+                    actions[i] = Action(action.type, mapping[action.state], action.rule_index)
+    return result
