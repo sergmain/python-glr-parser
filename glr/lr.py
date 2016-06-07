@@ -13,7 +13,7 @@ class Item(namedtuple('Item', ['rule_index', 'dot_position'])):
         return '#%d.%d' % self
 
 
-Node = namedtuple('Node', ['index', 'itemset', 'follow_dict', 'parent_rule_index', 'parent_lookahead'])
+State = namedtuple('State', ['index', 'itemset', 'follow_dict', 'parent_rule_index', 'parent_lookahead'])
 
 Action = namedtuple('Action', ['type', 'state', 'rule_index'])
 
@@ -75,35 +75,35 @@ def generate_state_graph(rules):
     assert isinstance(rules, RuleSet)
     print 'Parent          | Next        '
     print 'St | Lookahead  | St | Itemset'
-    nodes = []
-    node_by_itemset = {}
+    states = []
+    state_by_itemset = {}
 
     first_itemset = closure([Item(0, 0)], rules)
     first_itemset = tuple(sorted(first_itemset))
     stack = [(None, None, first_itemset)]
     while stack:
-        parent_node_index, parent_lookahead, itemset = stack.pop(0)
+        parent_state_index, parent_lookahead, itemset = stack.pop(0)
 
-        if itemset in node_by_itemset:
+        if itemset in state_by_itemset:
             # State already exist, just add follow link
-            node = node_by_itemset[itemset]
-            nodes[parent_node_index].follow_dict[parent_lookahead].add(node.index)
-            # print '%2s | %-10s | %2d | %s' % (parent_node_index, parent_lookahead, node.index, '')
+            state = state_by_itemset[itemset]
+            states[parent_state_index].follow_dict[parent_lookahead].add(state.index)
+            # print '%2s | %-10s | %2d | %s' % (parent_state_index, parent_lookahead, state.index, '')
             continue
 
-        node = Node(len(nodes), itemset, defaultdict(set), parent_node_index, parent_lookahead)
-        nodes.append(node)
-        node_by_itemset[node.itemset] = node
+        state = State(len(states), itemset, defaultdict(set), parent_state_index, parent_lookahead)
+        states.append(state)
+        state_by_itemset[state.itemset] = state
 
-        # print '%2s | %-10s | %2d | %s' % (parent_node_index or 0, parent_lookahead or '', node.index, node.itemset)
+        # print '%2s | %-10s | %2d | %s' % (parent_state_index or 0, parent_lookahead or '', state.index, state.itemset)
 
-        if parent_node_index is not None:
-            nodes[parent_node_index].follow_dict[parent_lookahead].add(node.index)
+        if parent_state_index is not None:
+            states[parent_state_index].follow_dict[parent_lookahead].add(state.index)
 
-        for lookahead, itemset in follow(node.itemset, rules):
+        for lookahead, itemset in follow(state.itemset, rules):
             itemset = tuple(sorted(itemset))
-            stack.append((node.index, lookahead, itemset))
-    return nodes
+            stack.append((state.index, lookahead, itemset))
+    return states
 
 
 def generate_followers(rules):
@@ -152,15 +152,15 @@ def generate_followers(rules):
 
 
 def generate_tables(rules):
-    nodes = generate_state_graph(rules)
+    states = generate_state_graph(rules)
     followers = generate_followers(rules)
 
     result = []
-    for node in nodes:
+    for state in states:
         actions = defaultdict(list)
 
         # Reduces
-        for item in node.itemset:
+        for item in state.itemset:
             rule = rules[item.rule_index]
             if item.dot_position == len(rule.elements):
                 if rule.name == '@':
@@ -171,13 +171,13 @@ def generate_tables(rules):
                     actions['$'].append(Action('R', None, item.rule_index))
 
         # Shifts & goto's
-        for lookahead, node_indexes in node.follow_dict.items():
-            for node_index in node_indexes:
-                child_node = nodes[node_index]
+        for lookahead, state_indexes in state.follow_dict.items():
+            for state_index in state_indexes:
+                child_state = states[state_index]
                 if lookahead in followers:
-                    actions[lookahead].append(Action('G', child_node.index, None))
+                    actions[lookahead].append(Action('G', child_state.index, None))
                 else:
-                    actions[lookahead].append(Action('S', child_node.index, None))
+                    actions[lookahead].append(Action('S', child_state.index, None))
 
         result.append(actions)
     return result
