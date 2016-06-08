@@ -140,15 +140,17 @@ lr_grammar_tokenizer = SimpleRegexTokenizer(dict(
 ), ['whitespace'])
 
 grammar = Grammar([
-    Rule(0, '@', ('S'), False, None, 1.0),
-    Rule(1, 'S', ('word', 'sep', 'Alternatives'), False, None, 1.0),
-    Rule(2, 'Alternatives', ('Alternatives', 'alt', 'Symbols'), False, None, 1.0),
-    Rule(3, 'Alternatives', ('Symbols', ), False, None, 1.0),
-    Rule(4, 'Symbols', ('Symbols', 'Symbol'), False, None, 1.0),
-    Rule(5, 'Symbols', ('Symbol',), False, None, 1.0),
-    Rule(6, 'Symbol', ('word', 'label'), False, None, 1.0),
-    Rule(7, 'Symbol', ('word',), False, None, 1.0),
-    Rule(8, 'Symbol', ('raw',), False, None, 1.0),
+    Rule(0, '@', ('S',), False, None, 1.0),
+    Rule(1, 'S', ('S', 'Rule'), False, None, 1.0),
+    Rule(2, 'S', ('Rule',), False, None, 1.0),
+    Rule(3, 'Rule', ('word', 'sep', 'Alternatives'), False, None, 1.0),
+    Rule(4, 'Alternatives', ('Alternatives', 'alt', 'Symbols'), False, None, 1.0),
+    Rule(5, 'Alternatives', ('Symbols', ), False, None, 1.0),
+    Rule(6, 'Symbols', ('Symbols', 'Symbol'), False, None, 1.0),
+    Rule(7, 'Symbols', ('Symbol',), False, None, 1.0),
+    Rule(8, 'Symbol', ('word', 'label'), False, None, 1.0),
+    Rule(9, 'Symbol', ('word',), False, None, 1.0),
+    Rule(10, 'Symbol', ('raw',), False, None, 1.0),
 ])
 
 text = '''

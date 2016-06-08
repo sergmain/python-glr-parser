@@ -181,7 +181,7 @@ def format_syntax_tree(syntax_tree):
     depth = max(len(l) for l, v in ast)
     lines = []
     for l, v in ast:
-        lines.append('%s %s' % (l.ljust(depth, u'.' if v else u' '), v))
+        lines.append('%s %s' % (l.ljust(depth, '.' if v else ' '), v))
     return '\n'.join(lines)
 
 

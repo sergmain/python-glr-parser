@@ -15,7 +15,6 @@ class GrammarParser(object):
         whitespace=r'[ \t\r\n]+',
         minus=r'[-]',
         label=r'\<.+?\>',
-        discard_names=('whitespace',)
     ), ['whitespace'])
 
     def _scan_rules(self, grammar, start):
