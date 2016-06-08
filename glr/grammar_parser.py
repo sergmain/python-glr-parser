@@ -166,6 +166,6 @@ class RuleSet(dict):
 def parse_grammar(grammar, kw_set, start_sym='S'):
     rules = RuleSet(grammar, kw_set, start_sym)
 
-    rules = [rule for rule in rules.values() if not isinstance(rule, set)]
+    rules = [rule for i, rule in sorted(rules.items()) if not isinstance(rule, set)]
 
     return Grammar(rules)

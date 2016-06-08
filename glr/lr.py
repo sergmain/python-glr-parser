@@ -60,7 +60,7 @@ def closure(itemset, grammar):
         for item, lookahead in iterate_lookaheads(items_to_process, grammar):
             if lookahead in grammar.nonterminals and lookahead not in visited_lookaheads:
                 visited_lookaheads.add(lookahead)
-                for rule_index in grammar.rules_for_symbol(lookahead):  # TODO: get_by_symbol
+                for rule_index in grammar.rules_for_symbol(lookahead):
                     nested_to_process.append(Item(rule_index, 0))
 
         if not nested_to_process:

@@ -2,10 +2,10 @@
 import sys
 
 from glr.grammar_parser import parse_grammar
-from glr.lr import generate_tables, generate_state_graph
+from glr.lr import *
 from glr.parser import Parser
 from glr.tokenizer import Token
-from glr.utils import change_state_indexes, print_table, gen_printable_table, print_states, print_rules
+from glr.utils import *
 from glrengine import GLRScanner
 
 dictionaries = {
@@ -107,8 +107,9 @@ print_states(states, grammar)
 action_goto_table = generate_tables(grammar)
 print_table(gen_printable_table(action_goto_table), sys.stdout)
 
-#action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9, 9:7})
-#print_table(gen_printable_table(action_goto_table), sys.stdout)
+action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9, 9:7})
+print_table(gen_printable_table(action_goto_table), sys.stdout)
+
 
 tokens = [
     Token('n', 'I', 0, 0),
@@ -125,4 +126,4 @@ tokens = [
 ]
 
 parser = Parser(grammar)
-#res = parser.parse(tokens)
+res = parser.parse(tokens)
