@@ -2,13 +2,13 @@
 from collections import defaultdict
 
 from glr.grammar import Rule, Grammar
-from glr.scanner import make_scanner
+from glr.tokenizer import SimpleRegexTokenizer
 
 __all__ = ['parse_grammar']
 
 
 class RuleSet(dict):
-    lr_grammar_scanner = make_scanner(
+    lr_grammar_tokenizer = SimpleRegexTokenizer(dict(
         sep='=',
         alt='[|]',
         word=r"\b\w+\b",
@@ -17,7 +17,7 @@ class RuleSet(dict):
         minus=r'[-]',
         label=r'\<.+?\>',
         discard_names=('whitespace',)
-    )
+    ))
 
     def __init__(self, grammar, kw_set, start_sym='S'):
         dict.__init__(self)
@@ -34,18 +34,18 @@ class RuleSet(dict):
         edit_rule_commit = True
         next_edit_rule_commit = True
         kw.add(edit_rule)
-        for tokname, tokvalue, tokpos in self.lr_grammar_scanner(grammar):
-            if tokname == 'minus':
+        for token in self.lr_grammar_tokenizer.scan(grammar):
+            if token.symbol == 'minus':
                 next_edit_rule_commit = False
-            if tokname == 'word' or tokname == 'raw':
-                words.append(tokvalue)
+            if token.symbol == 'word' or token.symbol == 'raw':
+                words.append(token.value)
                 labels.append(None)
-                kw.add(tokvalue)
-            elif tokname == 'alt':
+                kw.add(token.value)
+            elif token.symbol == 'alt':
                 yield (edit_rule, tuple(words), edit_rule_commit, labels[1:-1])
                 words = []
                 labels = []
-            elif tokname == 'sep':
+            elif token.symbol == 'sep':
                 tmp = words.pop()
                 yield (edit_rule, tuple(words), edit_rule_commit, labels[1:-1])
                 edit_rule_commit = next_edit_rule_commit
@@ -53,11 +53,11 @@ class RuleSet(dict):
                 edit_rule = tmp
                 words = []
                 labels = [None]
-            elif tokname == 'label':
+            elif token.symbol == 'label':
                 # "a=b, b=c, d" -> {"a": "b", "b": "c", "d": None}
-                tokvalue = tokvalue.strip().replace(" ", "")
+                token_value = token.value.strip().replace(" ", "")
                 label = defaultdict(list)
-                for l in tokvalue[1:-1].split(","):
+                for l in token_value[1:-1].split(","):
                     key, value = tuple(l.split("=", 1) + [None])[:2]
                     label[key].append(value)
                 # label = dict([tuple(l.split("=", 1) + [None])[:2] for l in tokvalue[1:-1].split(",")])

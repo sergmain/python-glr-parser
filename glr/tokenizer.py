@@ -12,8 +12,33 @@ class Token(namedtuple('Token', ['symbol', 'value', 'start', 'end', 'input_term'
     def __repr__(self):
         return '%s' % self.symbol
 
+class TokenizerException(Exception):
+    pass
 
-def tokenize(string):
-    split_re = re.compile('(?:(?P<alpha>[^\W\d_]+)|(?P<space>\s+)|(?P<digit>\d+)|(?P<punct>[^\w\s]|_))', re.U)
-    for m in split_re.finditer(string):
-        yield Token(m.lastgroup, m.group(m.lastgroup), m.start(), m.end())
+
+class SimpleRegexTokenizer(object):
+    def __init__(self, symbol_regex_dict, regex_flags = re.M | re.U | re.I):
+        patterns = []
+        for symbol, regex in symbol_regex_dict.items():
+            if '(?P<' in regex:
+                raise TokenizerException('Invalid regex "%s" for symbol "%s"' % (regex, symbol))
+            patterns.append('(?P<%s>%s)' % (symbol, regex))
+        self.re = re.compile('|'.join(patterns), regex_flags)
+        self.symbols = set(symbol_regex_dict.keys())
+
+    def scan(self, text):
+        for m in self.re.finditer(text):
+            yield Token(m.lastgroup, m.group(m.lastgroup), m.start(), m.end())
+
+
+class CharTypeTokenizer(SimpleRegexTokenizer):
+    def __init__(self):
+        symbol_regex_dict = {
+            'alpha': r'[^\W\d_]+',
+            'space': r'\s+',
+            'digit': r'\d+',
+            'punct': r'[^\w\s]|_',
+        }
+        super(CharTypeTokenizer, self).__init__(symbol_regex_dict)
+
+
