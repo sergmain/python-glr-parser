@@ -1,11 +1,14 @@
 # coding=utf-8
+import sys
+
+
 def unique(seq):
     seen = set()
     seen_add = seen.add
     return [x for x in seq if not (x in seen or seen_add(x))]
 
 
-def print_table(table, buf):
+def print_table(table, buf=sys.stdout):
     col_widths = [0] * len(table[0])
     for row in table:
         for j, cell in enumerate(row):
@@ -39,7 +42,7 @@ def print_table(table, buf):
         if True:
             print_row(i, u'│ │ │', row)
         if i == len(table) - 1:
-            print_row(i, u'└─┴─┘')
+            print_row(0, u'└─┴─┘')
 
 
 def gen_printable_table(action_table):
@@ -68,23 +71,25 @@ def print_rules(grammar):
         print '%2d | %s -> %s' % (i, r.left_symbol.ljust(max_symbol_len), ' '.join(r.right_symbols))
 
 
+def format_item(item, grammar):
+    rule = grammar[item.rule_index]
+    right_symbols = ''.join('.' + s if i == item.dot_position else ' ' + s for i, s in enumerate(rule.right_symbols))
+    return '%s -> %s%s' % (rule.left_symbol, right_symbols.strip(), '.' if item.dot_position == len(rule.right_symbols) else '')
+
+
 def print_states(states, grammar):
+    table = [['Go', 'to', 'St', 'Closure']]
+
     state_index = set((state.parent_state_index , state.parent_lookahead, state.index) for state in states)
     for i, state in enumerate(states):
-        itemset = []
-        for item in state.itemset:
-            rule = grammar[item.rule_index]
-            right_symbols = ''.join('.' + s if i == item.dot_position else ' ' + s for i, s in enumerate(rule.right_symbols))
-            itemset.append('%s -> %s' % (rule.left_symbol, right_symbols.strip()))
-            if item.dot_position == len(rule.right_symbols):
-                itemset[-1] += '.'
+        itemset = '; '.join(format_item(item, grammar) for item in state.itemset)
 
-        print '%2s | %-10s | %2s | %s' % (state.parent_state_index or 0, state.parent_lookahead or '', state.index, '; '.join(itemset))
+        table.append([state.parent_state_index or 0, state.parent_lookahead or '', state.index, itemset])
         for parent_lookahead, child_state_indexes in state.follow_dict.items():
             for child_state_index in child_state_indexes:
                 if (i, parent_lookahead, child_state_index) not in state_index:
-                    print '%2s | %-10s | %2s | %s' % (i, parent_lookahead, child_state_index, '')
-
+                    table.append([i, parent_lookahead, child_state_index, ''])
+    print_table(table)
 
 def print_stack_item(stack_item, second_line_prefix=''):
     def get_pathes(stack_item):
