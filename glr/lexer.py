@@ -30,7 +30,7 @@ class MorphologyLexer(object):
     def __init__(self):
         self.morph = pymorphy2.MorphAnalyzer()
 
-    def __call__(self, tokens):
+    def scan(self, tokens):
         for token in tokens:
             assert isinstance(token, Token)
 

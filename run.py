@@ -125,5 +125,9 @@ tokens = [
     Token("$", ''),
 ]
 
+def reduce_validator(rule, tokens):
+    print 'LABELS: ', rule,  ', '.join('%s(%s)' % (t[0], t[1]) for t in tokens)
+    return True
+
 parser = Parser(grammar)
-res = parser.parse(tokens)
+res = parser.parse(tokens, reduce_validator)
