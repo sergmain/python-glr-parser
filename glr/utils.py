@@ -50,7 +50,7 @@ def gen_printable_table(action_table):
         actions = [a for row in action_table if symbol in row for a in row[symbol]]
         has_goto = any(a.type == 'G' for a in actions)
         min_state = min([a.state for a in actions if a.state] or [1000])
-        return (has_goto, min_state)
+        return has_goto, min_state
 
     symbols = sorted(symbols, key=sort_key)
     table.append([''] + symbols)
@@ -60,6 +60,30 @@ def gen_printable_table(action_table):
             res.append(', '.join('%s%s%s' % (a if a != 'G' else '', s or '', r or '') for a, s, r in row[k]) if k in row else '')
         table.append(res)
     return table
+
+
+def print_rules(grammar):
+    max_symbol_len = max(len(s) for s in grammar.nonterminals)
+    for i, r in enumerate(grammar.rules):
+        print '%2d | %s -> %s' % (i, r.left_symbol.ljust(max_symbol_len), ' '.join(r.right_symbols))
+
+
+def print_states(states, grammar):
+    state_index = set((state.parent_state_index , state.parent_lookahead, state.index) for state in states)
+    for i, state in enumerate(states):
+        itemset = []
+        for item in state.itemset:
+            rule = grammar[item.rule_index]
+            right_symbols = ''.join('.' + s if i == item.dot_position else ' ' + s for i, s in enumerate(rule.right_symbols))
+            itemset.append('%s -> %s' % (rule.left_symbol, right_symbols.strip()))
+            if item.dot_position == len(rule.right_symbols):
+                itemset[-1] += '.'
+
+        print '%2s | %-10s | %2s | %s' % (state.parent_state_index or 0, state.parent_lookahead or '', state.index, '; '.join(itemset))
+        for parent_lookahead, child_state_indexes in state.follow_dict.items():
+            for child_state_index in child_state_indexes:
+                if (i, parent_lookahead, child_state_index) not in state_index:
+                    print '%2s | %-10s | %2s | %s' % (i, parent_lookahead, child_state_index, '')
 
 
 def print_stack_item(stack_item, second_line_prefix=''):

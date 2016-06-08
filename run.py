@@ -5,7 +5,7 @@ from glr.grammar_parser import parse_grammar
 from glr.lr import generate_tables, generate_state_graph
 from glr.parser import Parser
 from glr.tokenizer import Token
-from glr.utils import change_state_indexes, print_table, gen_printable_table
+from glr.utils import change_state_indexes, print_table, gen_printable_table, print_states, print_rules
 from glrengine import GLRScanner
 
 dictionaries = {
@@ -97,30 +97,18 @@ parser_rules = GrammarParser().parse_grammar(grammar, dictionaries)
 #     print k , v
 
 scanner = GLRScanner(**parser_rules)
+
 grammar = parse_grammar(grammar, set(scanner.tokens.keys()).union({'$'}), 'S')
+print_rules(grammar)
 
-for i, r in enumerate(grammar.rules):
-    if isinstance(i, int):
-        print '%2d | %-10s | %s' %(i,r[0],' '.join(r[1]))
-
-#states = generate_state_graph(grammar)
-# print states
-# for state in states:
-#     print '%2s | %-10s | %2d | %s' % (state.parent_rule_index or 0, state.parent_lookahead or '', state.index, state.itemset)
+states = generate_state_graph(grammar)
+print_states(states, grammar)
 
 action_goto_table = generate_tables(grammar)
-
-#action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9, 9:7})
-
 print_table(gen_printable_table(action_goto_table), sys.stdout)
 
-# for t, v, s, e in tokenize(u'Кронштейн f0a f_n КАМАЗ 20т. (На 5320,740-15)'):
-#     print t, v, s, e
-
-#TODO: rename Rule.name -> left_symbol
-#TODO: rename Rule.elements -> right_symbols
-
-
+#action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9, 9:7})
+#print_table(gen_printable_table(action_goto_table), sys.stdout)
 
 tokens = [
     Token('n', 'I', 0, 0),
@@ -137,7 +125,4 @@ tokens = [
 ]
 
 parser = Parser(grammar)
-
 #res = parser.parse(tokens)
-#s = res[-1]
-#print_ast(s)

@@ -12,7 +12,7 @@ class Item(namedtuple('Item', ['rule_index', 'dot_position'])):
         return '#%d.%d' % self
 
 
-State = namedtuple('State', ['index', 'itemset', 'follow_dict', 'parent_rule_index', 'parent_lookahead'])
+State = namedtuple('State', ['index', 'itemset', 'follow_dict', 'parent_state_index', 'parent_lookahead'])
 
 Action = namedtuple('Action', ['type', 'state', 'rule_index'])
 
