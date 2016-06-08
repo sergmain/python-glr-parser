@@ -1,23 +1,16 @@
 # -*- coding: utf-8 -*-
 from glr import GLRParser
 
-
 dictionaries = {
-    u"VARIABLES": [u"A", u"B", u"C"]
+    u"CLOTHES": [u"куртка", u"пальто", u"шубы"]
 }
 
 grammar = u"""
-S = Sums
-Sums = Sums 'plus' Products
-Sums = Products
-Products = Products 'mul' Value
-Products = Value
-Value = num
-Value = VARIABLES
+    S = adj<agr-gnc=1> CLOTHES
 """
 
-glr = GLRParser(grammar, dictionaries=dictionaries, debug=True)
+glr = GLRParser(grammar, dictionaries=dictionaries, debug=False)
 
-text = u"A mul 2 plus 1"
+text = u"на вешалке висят пять красивых курток и вонючая шуба"
 for parsed in glr.parse(text):
     print "FOUND:", parsed
