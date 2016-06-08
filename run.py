@@ -1,12 +1,11 @@
 # coding=utf-8
 import sys
 
-from glr.grammar_parser import parse_grammar
+from glr.grammar_parser import GrammarParser
 from glr.lr import *
 from glr.parser import Parser
 from glr.tokenizer import Token
 from glr.utils import *
-from glrengine import GLRScanner
 
 dictionaries = {
     u"VARIABLES": [u"A", u"B", u"C"]
@@ -44,62 +43,9 @@ PP = prep NP
 VP = v NP
 """
 
-class GrammarParser(object):
-    DEFAULT_PARSER = {
-        "word": r"[\w\d_-]+",
-        "number": r"[\d]+",
-        "space": r"[\s]+",
-        "newline": r"[\n]+",
-        "dot": r"[\.]+",
-        "comma": r"[,]+",
-        "colon": r"[:]+",
-        "percent": r"[%]+",
-        "quote": r"[\"\'«»`]+",
-        "brace": r"[\(\)\{\}\[\]]+",
-    }
 
-    DEFAULT_PARSER_DISCARD_NAMES = ["space"]
-
-    DEFAULT_GRAMMAR = """
-        Word = word
-        Word = noun
-        Word = adj
-        Word = verb
-        Word = pr
-        Word = dpr
-        Word = num
-        Word = adv
-        Word = pnoun
-        Word = prep
-        Word = conj
-        Word = prcl
-        Word = lat
-    """
-
-    def parse_grammar(self, grammar, dictionaries):
-        grammar_rules = u"%s\n%s" % (grammar, self.DEFAULT_GRAMMAR)
-        if dictionaries:
-            # превращает {k: [a, b, c]} -> "k = 'a' | 'b' | 'c'"
-            for dict_name, dict_words in dictionaries.items():
-                morphed = []
-                for word in dict_words:
-                    # morphed.append(morph_parser.normal(word))
-                    morphed.append(word)
-                grammar_rules += u"\n%s = '%s'" % (dict_name, "' | '".join(morphed))
-
-        parser_rules = self.DEFAULT_PARSER
-        parser_rules.update({"discard_names": self.DEFAULT_PARSER_DISCARD_NAMES})
-        return parser_rules
-
-parser_rules = GrammarParser().parse_grammar(grammar, dictionaries)
-
-# for k,v in parser_rules.items():
-#     print k , v
-
-scanner = GLRScanner(**parser_rules)
-
-grammar = parse_grammar(grammar, set(scanner.tokens.keys()).union({'$'}), 'S')
-print_rules(grammar)
+grammar = GrammarParser().parse(grammar, 'S')
+print_grammar(grammar)
 
 states = generate_state_graph(grammar)
 print_states(states, grammar)

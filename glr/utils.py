@@ -67,7 +67,7 @@ def gen_printable_table(action_table):
     return table
 
 
-def print_rules(grammar):
+def print_grammar(grammar):
     max_symbol_len = max(len(s) for s in grammar.nonterminals)
     for r in grammar.rules:
         print '%2d | %s -> %s' % (r.index, r.left_symbol.ljust(max_symbol_len), ' '.join(r.right_symbols))
