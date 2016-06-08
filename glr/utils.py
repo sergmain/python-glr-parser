@@ -77,14 +77,23 @@ def format_item(item, grammar):
     return '%s -> %s%s' % (rule.left_symbol, right_symbols.strip(), '.' if item.dot_position == len(rule.right_symbols) else '')
 
 
+def format_itemset(itemset, grammar):
+    return '; '.join(format_item(item, grammar) for item in itemset)
+
+
 def print_states(states, grammar):
     table = [['Go', 'to', 'St', 'Closure']]
 
     state_index = set((state.parent_state_index , state.parent_lookahead, state.index) for state in states)
     for i, state in enumerate(states):
-        itemset = '; '.join(format_item(item, grammar) for item in state.itemset)
 
-        table.append([state.parent_state_index or 0, state.parent_lookahead or '', state.index, itemset])
+        table.append([
+            state.parent_state_index or 0,
+            state.parent_lookahead or '',
+            state.index,
+            format_itemset(state.itemset, grammar)
+        ])
+
         for parent_lookahead, child_state_indexes in state.follow_dict.items():
             for child_state_index in child_state_indexes:
                 if (i, parent_lookahead, child_state_index) not in state_index:

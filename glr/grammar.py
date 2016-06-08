@@ -9,7 +9,7 @@ class Grammar(object):
         self._rules = rules
         self._rules_for_symbol = dict()
         for rule in self._rules:
-            self._rules_for_symbol.setdefault(rule.left_symbol, set()).add(self._rules.index(rule))
+            self._rules_for_symbol.setdefault(rule.left_symbol, []).append(self._rules.index(rule))
 
         def all_symbols():
             for rule in self._rules:
