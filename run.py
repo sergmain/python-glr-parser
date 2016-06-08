@@ -110,7 +110,7 @@ for i, r in enumerate(grammar.rules):
 
 action_goto_table = generate_tables(grammar)
 
-action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9, 9:7})
+#action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9, 9:7})
 
 print_table(gen_printable_table(action_goto_table), sys.stdout)
 
@@ -138,6 +138,6 @@ tokens = [
 
 parser = Parser(grammar)
 
-res = parser.parse(tokens)
+#res = parser.parse(tokens)
 #s = res[-1]
 #print_ast(s)

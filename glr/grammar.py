@@ -1,7 +1,6 @@
 # coding=utf8
 from collections import namedtuple
 
-
 Rule = namedtuple('Rule', ['left_symbol', 'right_symbols', 'commit'])
 
 
@@ -12,9 +11,15 @@ class Grammar(object):
         for rule in self._rules:
             self._rules_for_symbol.setdefault(rule.left_symbol, set()).add(self._rules.index(rule))
 
+        def all_symbols():
+            for rule in self._rules:
+                yield rule.left_symbol
+                for symbol in rule.right_symbols:
+                    yield symbol
+
+        self._symbols = set(all_symbols())
         self._nonterminals = set(rule.left_symbol for rule in self._rules)
-        self._symbols = self._nonterminals | set(symbol for rule in self._rules for symbol in rule.right_symbols)
-        self._terminals = set(symbol for symbol in self._symbols if symbol not in self._nonterminals)
+        self._terminals = self._symbols - self._nonterminals
 
     def __getitem__(self, item):
         return self._rules[item]

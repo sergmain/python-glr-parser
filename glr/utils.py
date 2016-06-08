@@ -45,7 +45,14 @@ def print_table(table, buf):
 def gen_printable_table(action_table):
     table = []
     symbols = unique(k for row in action_table for k in row.keys())
-    symbols = sorted(symbols, key=lambda x: (x[0].isupper(), x))
+
+    def sort_key(symbol):
+        actions = [a for row in action_table if symbol in row for a in row[symbol]]
+        has_goto = any(a.type == 'G' for a in actions)
+        min_state = min([a.state for a in actions if a.state] or [1000])
+        return (has_goto, min_state)
+
+    symbols = sorted(symbols, key=sort_key)
     table.append([''] + symbols)
     for i, row in enumerate(action_table):
         res = [i]
