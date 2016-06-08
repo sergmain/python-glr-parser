@@ -1,6 +1,6 @@
-from collections import namedtuple
-
+# coding=utf-8
 import re
+from collections import namedtuple
 
 
 class Token(namedtuple('Token', ['symbol', 'value', 'start', 'end', 'input_term', 'params'])):
@@ -17,18 +17,20 @@ class TokenizerException(Exception):
 
 
 class SimpleRegexTokenizer(object):
-    def __init__(self, symbol_regex_dict, regex_flags = re.M | re.U | re.I):
+    def __init__(self, symbol_regex_dict, discard_symbols=None, regex_flags=re.M | re.U | re.I):
         patterns = []
         for symbol, regex in symbol_regex_dict.items():
             if '(?P<' in regex:
                 raise TokenizerException('Invalid regex "%s" for symbol "%s"' % (regex, symbol))
             patterns.append('(?P<%s>%s)' % (symbol, regex))
         self.re = re.compile('|'.join(patterns), regex_flags)
-        self.symbols = set(symbol_regex_dict.keys())
+        self.discard_symbols = set(discard_symbols) or set()
+        self.symbols = set(symbol for symbol in symbol_regex_dict.keys() if symbol not in self.discard_symbols)
 
     def scan(self, text):
         for m in self.re.finditer(text):
-            yield Token(m.lastgroup, m.group(m.lastgroup), m.start(), m.end())
+            if m.lastgroup not in self.discard_symbols:
+                yield Token(m.lastgroup, m.group(m.lastgroup), m.start(), m.end())
 
 
 class CharTypeTokenizer(SimpleRegexTokenizer):
@@ -39,6 +41,21 @@ class CharTypeTokenizer(SimpleRegexTokenizer):
             'digit': r'\d+',
             'punct': r'[^\w\s]|_',
         }
-        super(CharTypeTokenizer, self).__init__(symbol_regex_dict)
+        super(CharTypeTokenizer, self).__init__(symbol_regex_dict, ['space'])
 
 
+class WordTokenizer(SimpleRegexTokenizer):
+    def __init__(self):
+        symbol_regex_dict = {
+            "word": r"[\w\d_-]+",
+            "number": r"[\d]+",
+            "space": r"[\s]+",
+            "newline": r"[\n]+",
+            "dot": r"[\.]+",
+            "comma": r"[,]+",
+            "colon": r"[:]+",
+            "percent": r"[%]+",
+            "quote": r"[\"\'«»`]+",
+            "brace": r"[\(\)\{\}\[\]]+",
+        }
+        super(WordTokenizer, self).__init__(symbol_regex_dict, ['space'])

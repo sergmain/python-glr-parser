@@ -17,7 +17,7 @@ class RuleSet(dict):
         minus=r'[-]',
         label=r'\<.+?\>',
         discard_names=('whitespace',)
-    ))
+    ), ['whitespace'])
 
     def __init__(self, grammar, kw_set, start_sym='S'):
         dict.__init__(self)
