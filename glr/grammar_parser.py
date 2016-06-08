@@ -57,7 +57,8 @@ class GrammarParser(object):
         rules = []
         for rulename, elems, commit, labels in self._scan_rules(grammar, start):
             if len(elems) > 0:
-                rules.append(Rule(len(rules), rulename, elems, commit, labels))
+                #TODO: support weight parsing
+                rules.append(Rule(len(rules), rulename, elems, commit, labels, 1.0))
             else:
                 raise Exception('GLR parser does not support epsilon free rules')
 
