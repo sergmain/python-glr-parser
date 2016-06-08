@@ -59,6 +59,6 @@ class Parser(object):
 
         print '\n--------------------\nACCEPTED:'
         for node in accepted_nodes:
-            print_ast(node)
+            print_ast(node.token)
 
         return accepted_nodes

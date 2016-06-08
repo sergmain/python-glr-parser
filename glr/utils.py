@@ -1,6 +1,8 @@
 # coding=utf-8
 import sys
 
+from glr.tokenizer import Token
+
 
 def unique(seq):
     seen = set()
@@ -133,7 +135,7 @@ def print_stack_item(stack_item, second_line_prefix=''):
         return '0'
 
 
-def gen_ast(node, last=False, prefix=''):
+def gen_ast(token, last=False, prefix=''):
     line = prefix[:-1]
     if prefix:
         if not last:
@@ -142,18 +144,21 @@ def gen_ast(node, last=False, prefix=''):
             line += u'╰──'
     else:
         line = '  '
-    line += node.token.symbol
-    yield line, node.token.value
+    line += token.symbol
 
-    if node.reduced:
-        for i, r in enumerate(node.reduced):
-            last = i == len(node.reduced) - 1
+    if token.reduced_tokens:
+        yield line, ''
+        for i, r in enumerate(token.reduced_tokens):
+            last = i == len(token.reduced_tokens) - 1
             for line, value in gen_ast(r, last, prefix + ('   ' if last else u'  │')):
                 yield line, value
+    else:
+        yield line, token.value
 
 
-def print_ast(node):
-    ast = list(gen_ast(node))
+def print_ast(token):
+    assert isinstance(token, Token)
+    ast = list(gen_ast(token))
     depth = max(len(l) for l, v in ast)
     for l, v in ast:
         print l.ljust(depth, u'.' if v else u' '), v
