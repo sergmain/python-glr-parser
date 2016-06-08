@@ -67,10 +67,12 @@ def gen_printable_table(action_table):
     return table
 
 
-def print_grammar(grammar):
+def format_grammar(grammar):
     max_symbol_len = max(len(s) for s in grammar.nonterminals)
+    lines = []
     for r in grammar.rules:
-        print '%2d | %s -> %s' % (r.index, r.left_symbol.ljust(max_symbol_len), ' '.join(r.right_symbols))
+        lines.append('%2d | %s -> %s' % (r.index, r.left_symbol.ljust(max_symbol_len), ' '.join(r.right_symbols)))
+    return '\n'.join(lines)
 
 
 def format_item(item, grammar):
@@ -102,7 +104,8 @@ def print_states(states, grammar):
                     table.append([i, parent_lookahead, child_state_index, ''])
     print_table(table)
 
-def print_stack_item(stack_item, second_line_prefix=''):
+
+def format_stack_item(stack_item, second_line_prefix=''):
     def get_pathes(stack_item):
         if stack_item.prev:
             for prev in stack_item.prev:
@@ -155,12 +158,14 @@ def gen_ast(syntax_tree, last=False, prefix=''):
                 yield line, value
 
 
-def print_ast(syntax_tree):
+def format_syntax_tree(syntax_tree):
     assert isinstance(syntax_tree, SyntaxTree)
     ast = list(gen_ast(syntax_tree))
     depth = max(len(l) for l, v in ast)
+    lines = []
     for l, v in ast:
-        print l.ljust(depth, u'.' if v else u' '), v
+        lines.append('%s %s' % (l.ljust(depth, u'.' if v else u' '), v))
+    return '\n'.join(lines)
 
 
 def change_state_indexes(table, mapping):

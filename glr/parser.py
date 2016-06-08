@@ -1,14 +1,19 @@
 from glr.grammar import Grammar
 from glr.lr import generate_tables
 from glr.stack import StackItem
-from glr.utils import print_stack_item, print_ast
+from glr.utils import format_stack_item, format_syntax_tree
 
 
 class Parser(object):
-    def __init__(self, grammar):
+    def __init__(self, grammar, log_level=0):
         assert isinstance(grammar, Grammar)
         self.grammar = grammar
         self.action_goto_table = generate_tables(self.grammar)
+        self.log_level = log_level
+
+    def log(self, level, pattern, *args):
+        if level <= self.log_level:
+            print pattern % args
 
     def get_by_action_type(self, nodes, token, action_type):
         for node in nodes:
@@ -24,41 +29,41 @@ class Parser(object):
         current = [StackItem.start_new()]
 
         for token in tokens:
-            print '\n\nTOKEN:', token
+            self.log(1, '\n\nTOKEN: %s', token)
 
             process_reduce_nodes = current[:]
             while process_reduce_nodes:
                 new_reduce_nodes = []
                 for node, action in self.get_by_action_type(process_reduce_nodes, token, 'R'):
-                    print '- REDUCE: (%s) by (%s)' % (node, action.rule_index)
+                    self.log(1, '- REDUCE: (%s) by (%s)', node, action.rule_index)
                     rule = self.grammar[action.rule_index]
                     reduced_nodes = node.reduce(self.action_goto_table, rule, reduce_validator)
                     new_reduce_nodes.extend(reduced_nodes)
                     for n in reduced_nodes:
-                        print '    ', print_stack_item(n, '     ')
+                        self.log('    %s', format_stack_item(n, '     '))
                 process_reduce_nodes = new_reduce_nodes
                 current.extend(new_reduce_nodes)
 
             for node, action in self.get_by_action_type(current, token, 'A'):
-                print '- ACCEPT: (%s)' % (node,)
+                self.log(1, '- ACCEPT: (%s)', node)
                 accepted_nodes.append(node)
 
             shifted_nodes = []
             for node, action in self.get_by_action_type(current, token, 'S'):
                 shifted_node = node.shift(token, action.state)
-                print '- SHIFT: (%s) to (%s)  =>  %s' % (node, action.state, shifted_node)
+                self.log(1, '- SHIFT: (%s) to (%s)  =>  %s', node, action.state, shifted_node)
                 shifted_nodes.append(shifted_node)
 
             current = shifted_nodes
 
             current = list(StackItem.merge(current))
 
-            print '\n- STACK:'
+            self.log(1, '\n- STACK:')
             for node in current:
-                print print_stack_item(node)
+                self.log(1, '%s', format_stack_item(node))
 
-        print '\n--------------------\nACCEPTED:'
+        self.log(1, '\n--------------------\nACCEPTED:')
         for node in accepted_nodes:
-            print_ast(node.syntax_tree)
+            self.log(1, '%s', format_syntax_tree(node.syntax_tree))
 
-        return accepted_nodes
+        return [node.syntax_tree for node in accepted_nodes]

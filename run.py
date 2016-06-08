@@ -1,6 +1,7 @@
 # coding=utf-8
 import sys
 
+from glr.automation import Automation
 from glr.grammar_parser import GrammarParser
 from glr.lexer import MorphologyLexer
 from glr.lr import *
@@ -47,7 +48,7 @@ def test1():
 
 
     grammar = GrammarParser().parse(grammar, 'S')
-    print_grammar(grammar)
+    print format_grammar(grammar)
 
     states = generate_state_graph(grammar)
     print_states(states, grammar)
@@ -81,6 +82,39 @@ def test1():
     res = parser.parse(tokens, reduce_validator)
 
 
+def test2():
+
+    grammar = u"""
+    S = NP VP
+    S = S PP
+    NP = pnoun
+    NP = noun
+    NP = adj noun
+    NP = NP PP
+    PP = prep NP
+    VP = verb NP
+    """
+
+    grammar = GrammarParser().parse(grammar, 'S')
+    format_grammar(grammar)
+
+    parser = Parser(grammar)
+
+    tokenizer = WordTokenizer()
+    for token in tokenizer.scan(u'Я видел того человека в той квартире с таким телескопом'):
+        print token.symbol, token.value
+
+    print
+
+    lexer = MorphologyLexer(tokenizer)
+    tokens = list(lexer.scan(u'Я видел того человека в той квартире с таким телескопом'))
+    for token in tokens:
+        print '%-5s | %-10s | %s' % (token.symbol, token.value, token.params)
+
+    def reduce_validator(syntax_tree):
+        return True
+
+    res = parser.parse(tokens, reduce_validator)
 
 
 grammar = u"""
@@ -93,24 +127,6 @@ NP = NP PP
 PP = prep NP
 VP = verb NP
 """
-
-grammar = GrammarParser().parse(grammar, 'S')
-print_grammar(grammar)
-
-parser = Parser(grammar)
-
-tokenizer = WordTokenizer()
-for token in tokenizer.scan(u'Я видел того человека в той квартире с таким телескопом'):
-    print token.symbol, token.value
-
-print
-
-lexer = MorphologyLexer(tokenizer)
-tokens = list(lexer.scan(u'Я видел того человека в той квартире с таким телескопом'))
-for token in tokens:
-    print '%-5s | %-10s | %s' % (token.symbol, token.value, token.params)
-
-def reduce_validator(syntax_tree):
-    return True
-
-res = parser.parse(tokens, reduce_validator)
+automation = Automation(grammar)
+for syntax_tree in automation.parse(u'Я видел того человека в той квартире с таким телескопом'):
+    print format_syntax_tree(syntax_tree)
