@@ -30,7 +30,7 @@ class StackItem(namedtuple('StackItem', ['token', 'state', 'reduced', 'prev'])):
             # TODO: probably assert that only 1 goto action and it is 'G'
             for goto_action in goto_actions:
                 if goto_action.type == 'G':
-                    new_head = path[0].shift(Token(rule.left_symbol, '', 0, 0), goto_action.state, tuple(path[1:]))
+                    new_head = path[0].shift(Token(rule.left_symbol), goto_action.state, tuple(path[1:]))
                     result.append(new_head)
         return result
 

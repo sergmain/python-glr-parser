@@ -2,7 +2,7 @@
 from collections import defaultdict
 
 from glr.grammar import Rule, Grammar
-from glrengine.scanner import make_scanner
+from glr.scanner import make_scanner
 
 __all__ = ['parse_grammar']
 

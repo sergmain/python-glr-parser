@@ -112,17 +112,17 @@ print_table(gen_printable_table(action_goto_table), sys.stdout)
 
 
 tokens = [
-    Token('n', 'I', 0, 0),
-    Token("v", 'saw', 0, 0),
-    Token("det", 'a', 0, 0),
-    Token("n", 'man', 0, 0),
-    Token("prep", 'in', 0, 0),
-    Token("det", 'the', 0, 0),
-    Token("n", 'apartment', 0, 0),
-    Token("prep", 'with', 0, 0),
-    Token("det", 'a', 0, 0),
-    Token("n", 'telescope', 0, 0),
-    Token("$", '', 0, 0),
+    Token('n', 'I'),
+    Token("v", 'saw'),
+    Token("det", 'a'),
+    Token("n", 'man'),
+    Token("prep", 'in'),
+    Token("det", 'the'),
+    Token("n", 'apartment'),
+    Token("prep", 'with'),
+    Token("det", 'a'),
+    Token("n", 'telescope'),
+    Token("$", ''),
 ]
 
 parser = Parser(grammar)

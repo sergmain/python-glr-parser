@@ -73,9 +73,6 @@ def closure(itemset, grammar):
 def generate_state_graph(grammar):
     assert isinstance(grammar, Grammar)
 
-    # print 'Parent          | Next        '
-    # print 'St | Lookahead  | St | Itemset'
-
     states = []
     state_by_itemset = {}
 
@@ -89,14 +86,11 @@ def generate_state_graph(grammar):
             # State already exist, just add follow link
             state = state_by_itemset[itemset]
             states[parent_state_index].follow_dict[parent_lookahead].add(state.index)
-            # print '%2s | %-10s | %2d | %s' % (parent_state_index, parent_lookahead, state.index, '')
             continue
 
         state = State(len(states), itemset, defaultdict(set), parent_state_index, parent_lookahead)
         states.append(state)
         state_by_itemset[state.itemset] = state
-
-        # print '%2s | %-10s | %2d | %s' % (parent_state_index or 0, parent_lookahead or '', state.index, state.itemset)
 
         if parent_state_index is not None:
             states[parent_state_index].follow_dict[parent_lookahead].add(state.index)
