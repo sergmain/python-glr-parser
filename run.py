@@ -126,7 +126,7 @@ tokens = [
 ]
 
 def reduce_validator(syntax_tree):
-    #print 'LABELS: ', syntax_tree
+    print 'LABELS: ', syntax_tree
     return True
 
 parser = Parser(grammar)

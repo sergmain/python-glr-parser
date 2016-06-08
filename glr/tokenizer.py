@@ -3,24 +3,14 @@ import re
 from collections import namedtuple
 
 
-class Token(namedtuple('Token', ['symbol', 'value', 'start', 'end', 'input_term', 'params', 'reduced_tokens'])):
+class Token(namedtuple('Token', ['symbol', 'value', 'start', 'end', 'input_term', 'params'])):
     '''
     Used as token and as node in AST (abstract syntax tree)
     '''
     __slots__ = ()
 
-    def __new__(cls, symbol, value='', start=-1, end=-1, input_term='', params=None, reduced_tokens=None):
-        return super(cls, Token).__new__(cls, symbol, value, start, end, input_term, params, reduced_tokens)
-
-    @classmethod
-    def reduce(cls, rule, tokens):
-        return Token(
-            rule.left_symbol,
-            ' '.join(t.value for t in tokens),
-            tokens[0].start,
-            tokens[-1].end,
-            ' '.join(t.input_term for t in tokens),
-            reduced_tokens=tuple(tokens))
+    def __new__(cls, symbol, value='', start=-1, end=-1, input_term='', params=None):
+        return super(cls, Token).__new__(cls, symbol, value, start, end, input_term, params)
 
     def __repr__(self):
         return '%s' % self.symbol

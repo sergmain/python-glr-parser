@@ -36,8 +36,7 @@ class StackItem(namedtuple('StackItem', ['syntax_tree', 'state', 'prev'])):
             # TODO: probably assert that only 1 goto action and it is 'G'
             for goto_action in goto_actions:
                 if goto_action.type == 'G':
-                    # TODO: use rule.index instead of 0
-                    syntax_tree = SyntaxTree(rule.left_symbol, None, 0, tuple(stack_item.syntax_tree for stack_item in path[1:]))
+                    syntax_tree = SyntaxTree(rule.left_symbol, None, rule.index, tuple(stack_item.syntax_tree for stack_item in path[1:]))
                     if reduce_validator is None or reduce_validator(syntax_tree):
                         new_head = StackItem(syntax_tree, goto_action.state, (path[0],))
                         result.append(new_head)
