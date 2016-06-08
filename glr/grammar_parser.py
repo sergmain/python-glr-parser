@@ -100,7 +100,7 @@ class RuleSet(dict):
         if rulename not in self:
             self.names_count += 1
             self[rulename] = set()
-        rule = Rule(rulename, elems, commit)
+        rule = Rule(rulename, elems, commit, labels)
         if rule not in (self[i] for i in self[rulename]):
             self[rulename].add(self.rules_count)
             self[self.rules_count] = rule
@@ -144,7 +144,7 @@ class RuleSet(dict):
             if self[i] is None:
                 i += 1
                 continue
-            rulename, elems, commit = self[i]
+            rulename, elems, commit, labels = self[i]
             if eps in elems:
                 elems = tuple(e for e in elems if e != eps)
                 if len(elems) == 0:
@@ -157,7 +157,7 @@ class RuleSet(dict):
                     epsilons.add(rulename)
                     # print "epsilon removal created new epsilon rule", rulename
                 else:
-                    self[i] = Rule(rulename, elems, commit)
+                    self[i] = Rule(rulename, elems, commit, labels)
                     #
             i += 1
         return must_cleanup

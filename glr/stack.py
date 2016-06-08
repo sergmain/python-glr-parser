@@ -22,7 +22,7 @@ class StackItem(namedtuple('StackItem', ['token', 'state', 'reduced', 'prev'])):
     def shift(self, token, state, reduced=None):
         return StackItem(token, state, reduced, (self,))
 
-    def reduce(self, action_goto_table, rule):
+    def reduce(self, action_goto_table, rule, reduce_validator=None):
         result = []
         depth = len(rule.right_symbols)
         for path in self.pop(depth):
@@ -30,8 +30,9 @@ class StackItem(namedtuple('StackItem', ['token', 'state', 'reduced', 'prev'])):
             # TODO: probably assert that only 1 goto action and it is 'G'
             for goto_action in goto_actions:
                 if goto_action.type == 'G':
-                    new_head = path[0].shift(Token(rule.left_symbol), goto_action.state, tuple(path[1:]))
-                    result.append(new_head)
+                    if reduce_validator is None or reduce_validator(rule, tuple(stack_item.token for stack_item in path[1:])):
+                        new_head = path[0].shift(Token(rule.left_symbol), goto_action.state, tuple(path[1:]))
+                        result.append(new_head)
         return result
 
     @classmethod

@@ -18,7 +18,7 @@ class Parser(object):
                     yield node, action
 
     # http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=DBFD4413CFAD29BC537FD98959E6B779?doi=10.1.1.39.1262&rep=rep1&type=pdf
-    def parse(self, tokens):
+    def parse(self, tokens, reduce_validator=None):
         accepted_nodes = []
 
         current = [StackItem.start_new()]
@@ -32,7 +32,7 @@ class Parser(object):
                 for node, action in self.get_by_action_type(process_reduce_nodes, token, 'R'):
                     print '- REDUCE: (%s) by (%s)' % (node, action.rule_index)
                     rule = self.grammar[action.rule_index]
-                    reduced_nodes = node.reduce(self.action_goto_table, rule)
+                    reduced_nodes = node.reduce(self.action_goto_table, rule, reduce_validator)
                     new_reduce_nodes.extend(reduced_nodes)
                     for n in reduced_nodes:
                         print '    ', print_stack_item(n, '     ')

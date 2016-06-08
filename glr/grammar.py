@@ -1,7 +1,7 @@
 # coding=utf8
 from collections import namedtuple
 
-Rule = namedtuple('Rule', ['left_symbol', 'right_symbols', 'commit'])
+Rule = namedtuple('Rule', ['left_symbol', 'right_symbols', 'commit', 'params'])
 
 
 class Grammar(object):
