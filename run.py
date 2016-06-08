@@ -2,11 +2,12 @@
 import sys
 
 from glr.automation import Automation
+from glr.grammar import Rule
 from glr.grammar_parser import GrammarParser
 from glr.lexer import MorphologyLexer
 from glr.lr import *
 from glr.parser import Parser
-from glr.tokenizer import Token, WordTokenizer
+from glr.tokenizer import Token, WordTokenizer, SimpleRegexTokenizer
 from glr.utils import *
 
 def test1():
@@ -51,13 +52,13 @@ def test1():
     print format_grammar(grammar)
 
     states = generate_state_graph(grammar)
-    print_states(states, grammar)
+    print format_states(states, grammar)
 
-    action_goto_table = generate_tables(grammar)
-    print_table(gen_printable_table(action_goto_table), sys.stdout)
+    action_goto_table = generate_action_goto_table(grammar)
+    print format_action_goto_table(action_goto_table)
 
     action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9, 9:7})
-    print_table(gen_printable_table(action_goto_table), sys.stdout)
+    print format_action_goto_table(action_goto_table)
 
 
     tokens = [
@@ -101,23 +102,56 @@ def test2():
     parser = Parser(grammar)
 
     tokenizer = WordTokenizer()
-    for token in tokenizer.scan(u'Я видел того человека в той квартире с таким телескопом'):
-        print token.symbol, token.value
-
-    print
+    print format_tokens(tokenizer.scan(u'Я видел того человека в той квартире с таким телескопом'))
 
     lexer = MorphologyLexer(tokenizer)
     tokens = list(lexer.scan(u'Я видел того человека в той квартире с таким телескопом'))
-    for token in tokens:
-        print '%-5s | %-10s | %s' % (token.symbol, token.value, token.params)
+    print format_tokens(tokens)
 
     def reduce_validator(syntax_tree):
         return True
 
     res = parser.parse(tokens, reduce_validator)
 
+def test3():
+    grammar = u"""
+    S = NP VP
+    S = S PP
+    NP = pnoun
+    NP = noun
+    NP = adj noun
+    NP = NP PP
+    PP = prep NP
+    VP = verb NP
+    """
+    automation = Automation(grammar)
+    for syntax_tree in automation.parse(u'Я видел того человека в той квартире с таким телескопом'):
+        print format_syntax_tree(syntax_tree)
 
-grammar = u"""
+
+lr_grammar_tokenizer = SimpleRegexTokenizer(dict(
+    sep='=',
+    alt='\|',
+    word=r"\b\w+\b",
+    raw=r"'.+?'",
+    whitespace=r'[ \t\r\n]+',
+    minus=r'-',
+    label=r'<.+?>',
+), ['whitespace'])
+
+grammar = Grammar([
+    Rule(0, '@', ('S'), False, None, 1.0),
+    Rule(1, 'S', ('word', 'sep', 'Alternatives'), False, None, 1.0),
+    Rule(2, 'Alternatives', ('Alternatives', 'alt', 'Symbols'), False, None, 1.0),
+    Rule(3, 'Alternatives', ('Symbols', ), False, None, 1.0),
+    Rule(4, 'Symbols', ('Symbols', 'Symbol'), False, None, 1.0),
+    Rule(5, 'Symbols', ('Symbol',), False, None, 1.0),
+    Rule(6, 'Symbol', ('word', 'label'), False, None, 1.0),
+    Rule(7, 'Symbol', ('word',), False, None, 1.0),
+    Rule(8, 'Symbol', ('raw',), False, None, 1.0),
+])
+
+text = '''
 S = NP VP
 S = S PP
 NP = pnoun
@@ -126,7 +160,12 @@ NP = adj noun
 NP = NP PP
 PP = prep NP
 VP = verb NP
-"""
-automation = Automation(grammar)
-for syntax_tree in automation.parse(u'Я видел того человека в той квартире с таким телескопом'):
+'''
+
+#print format_tokens(lr_grammar_tokenizer.scan(text))
+print format_grammar(grammar)
+print format_action_goto_table(generate_action_goto_table(grammar))
+
+parser = Parser(grammar, 1)
+for syntax_tree in parser.parse(lr_grammar_tokenizer.scan(text)):
     print format_syntax_tree(syntax_tree)

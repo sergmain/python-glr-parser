@@ -1,6 +1,8 @@
 # coding=utf-8
 import sys
 
+import StringIO
+
 from glr.stack import SyntaxTree
 
 
@@ -10,7 +12,9 @@ def unique(seq):
     return [x for x in seq if not (x in seen or seen_add(x))]
 
 
-def print_table(table, buf=sys.stdout):
+def format_table(table):
+    buf = StringIO.StringIO()
+
     col_widths = [0] * len(table[0])
     for row in table:
         for j, cell in enumerate(row):
@@ -45,26 +49,28 @@ def print_table(table, buf=sys.stdout):
             print_row(i, u'│ │ │', row)
         if i == len(table) - 1:
             print_row(0, u'└─┴─┘')
+    #TODO: do I need to close buffer?
+    return buf.getvalue()
 
 
-def gen_printable_table(action_table):
+def format_action_goto_table(action_goto_table):
     table = []
-    symbols = unique(k for row in action_table for k in row.keys())
+    symbols = unique(k for row in action_goto_table for k in row.keys())
 
     def sort_key(symbol):
-        actions = [a for row in action_table if symbol in row for a in row[symbol]]
+        actions = [a for row in action_goto_table if symbol in row for a in row[symbol]]
         has_goto = any(a.type == 'G' for a in actions)
         min_state = min([a.state for a in actions if a.state] or [1000])
         return has_goto, min_state
 
     symbols = sorted(symbols, key=sort_key)
     table.append([''] + symbols)
-    for i, row in enumerate(action_table):
+    for i, row in enumerate(action_goto_table):
         res = [i]
         for k in symbols:
             res.append(', '.join('%s%s%s' % (a if a != 'G' else '', s or '', r or '') for a, s, r in row[k]) if k in row else '')
         table.append(res)
-    return table
+    return format_table(table)
 
 
 def format_grammar(grammar):
@@ -73,6 +79,17 @@ def format_grammar(grammar):
     for r in grammar.rules:
         lines.append('%2d | %s -> %s' % (r.index, r.left_symbol.ljust(max_symbol_len), ' '.join(r.right_symbols)))
     return '\n'.join(lines)
+
+
+def format_tokens(tokens):
+    table = []
+    for token in tokens:
+        table.append([
+            token.symbol,
+            token.value,
+            token.input_term if token.value != token.input_term else '',
+            token.params])
+    return format_table(table)
 
 
 def format_item(item, grammar):
@@ -85,7 +102,7 @@ def format_itemset(itemset, grammar):
     return '; '.join(format_item(item, grammar) for item in itemset)
 
 
-def print_states(states, grammar):
+def format_states(states, grammar):
     table = [['Go', 'to', 'St', 'Closure']]
 
     state_index = set((state.parent_state_index , state.parent_lookahead, state.index) for state in states)
@@ -102,7 +119,7 @@ def print_states(states, grammar):
             for child_state_index in child_state_indexes:
                 if (i, parent_lookahead, child_state_index) not in state_index:
                     table.append([i, parent_lookahead, child_state_index, ''])
-    print_table(table)
+    format_table(table)
 
 
 def format_stack_item(stack_item, second_line_prefix=''):
@@ -138,7 +155,7 @@ def format_stack_item(stack_item, second_line_prefix=''):
         return '0'
 
 
-def gen_ast(syntax_tree, last=False, prefix=''):
+def generate_syntax_tree_lines(syntax_tree, last=False, prefix=''):
     line = prefix[:-1]
     if prefix:
         if not last:
@@ -154,13 +171,13 @@ def gen_ast(syntax_tree, last=False, prefix=''):
         yield line + syntax_tree.symbol, ''
         for i, r in enumerate(syntax_tree.children):
             last = i == len(syntax_tree.children) - 1
-            for line, value in gen_ast(r, last, prefix + ('   ' if last else u'  │')):
+            for line, value in generate_syntax_tree_lines(r, last, prefix + ('   ' if last else u'  │')):
                 yield line, value
 
 
 def format_syntax_tree(syntax_tree):
     assert isinstance(syntax_tree, SyntaxTree)
-    ast = list(gen_ast(syntax_tree))
+    ast = list(generate_syntax_tree_lines(syntax_tree))
     depth = max(len(l) for l, v in ast)
     lines = []
     for l, v in ast:

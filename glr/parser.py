@@ -1,5 +1,5 @@
 from glr.grammar import Grammar
-from glr.lr import generate_tables
+from glr.lr import generate_action_goto_table
 from glr.stack import StackItem
 from glr.utils import format_stack_item, format_syntax_tree
 
@@ -8,7 +8,7 @@ class Parser(object):
     def __init__(self, grammar, log_level=0):
         assert isinstance(grammar, Grammar)
         self.grammar = grammar
-        self.action_goto_table = generate_tables(self.grammar)
+        self.action_goto_table = generate_action_goto_table(self.grammar)
         self.log_level = log_level
 
     def log(self, level, pattern, *args):
@@ -35,8 +35,8 @@ class Parser(object):
             while process_reduce_nodes:
                 new_reduce_nodes = []
                 for node, action in self.get_by_action_type(process_reduce_nodes, token, 'R'):
-                    self.log(1, '- REDUCE: (%s) by (%s)', node, action.rule_index)
                     rule = self.grammar[action.rule_index]
+                    self.log(1, '- REDUCE: (%s) by (%s)', node, rule)
                     reduced_nodes = node.reduce(self.action_goto_table, rule, reduce_validator)
                     new_reduce_nodes.extend(reduced_nodes)
                     for n in reduced_nodes:

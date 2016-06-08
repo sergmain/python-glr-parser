@@ -145,7 +145,7 @@ def generate_followers(grammar):
     return followers
 
 
-def generate_tables(grammar):
+def generate_action_goto_table(grammar):
     assert isinstance(grammar, Grammar)
 
     states = generate_state_graph(grammar)
