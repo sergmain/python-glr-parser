@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from glr import GLRParser
+from glr_parser import GLRParser
 
 dictionaries = {
     u"CLOTHES": [u"куртка", u"пальто", u"шубы"]
