@@ -154,14 +154,11 @@ grammar = Grammar([
 ])
 
 text = '''
-S = NP VP
-S = S PP
-NP = pnoun
-NP = noun
-NP = adj noun
-NP = NP PP
+S = NP VP | S PP
+NP = pnoun | noun | adj noun | NP PP
 PP = prep NP
-VP = verb NP
+VP = verb<a> NP<a>
+NP = 'test'
 '''
 
 #print format_tokens(lr_grammar_tokenizer.scan(text))
