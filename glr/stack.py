@@ -1,10 +1,15 @@
 from collections import namedtuple
 from itertools import groupby
 
-from glr.tokenizer import Token
+
+class SyntaxTree(namedtuple('SyntaxTree', ['symbol', 'token', 'rule_index', 'children'])):
+    __slots__ = ()
+
+    def is_leaf(self):
+        return not self.children
 
 
-class StackItem(namedtuple('StackItem', ['token', 'state', 'prev'])):
+class StackItem(namedtuple('StackItem', ['syntax_tree', 'state', 'prev'])):
     __slots__ = ()
 
     def pop(self, depth):
@@ -20,7 +25,8 @@ class StackItem(namedtuple('StackItem', ['token', 'state', 'prev'])):
         return result
 
     def shift(self, token, state):
-        return StackItem(token, state, (self,))
+        syntax_tree = SyntaxTree(token.symbol, token, None, ())
+        return StackItem(syntax_tree, state, (self,))
 
     def reduce(self, action_goto_table, rule, reduce_validator=None):
         result = []
@@ -30,20 +36,20 @@ class StackItem(namedtuple('StackItem', ['token', 'state', 'prev'])):
             # TODO: probably assert that only 1 goto action and it is 'G'
             for goto_action in goto_actions:
                 if goto_action.type == 'G':
-                    tokens_to_reduce = [stack_item.token for stack_item in path[1:]]
-                    if reduce_validator is None or reduce_validator(rule, tokens_to_reduce):
-                        token = Token.reduce(rule, tokens_to_reduce)
-                        new_head = path[0].shift(token, goto_action.state)
+                    # TODO: use rule.index instead of 0
+                    syntax_tree = SyntaxTree(rule.left_symbol, None, 0, tuple(stack_item.syntax_tree for stack_item in path[1:]))
+                    if reduce_validator is None or reduce_validator(syntax_tree):
+                        new_head = StackItem(syntax_tree, goto_action.state, (path[0],))
                         result.append(new_head)
         return result
 
     @classmethod
     def merge(cls, stack_items):
-        for key, group in groupby(sorted(stack_items), lambda si: (si.token, si.state)):
+        for key, group in groupby(sorted(stack_items), lambda si: (si.syntax_tree, si.state)):
             group = [g for g in group]
             if len(group) > 1:
                 all_prevs = tuple(p for stack_item in group for p in stack_item.prev)
-                yield StackItem(key[0], key[1], all_prevs)
+                yield StackItem(group[0].syntax_tree, group[0].state, all_prevs)
             else:
                 yield group[0]
 
@@ -53,6 +59,6 @@ class StackItem(namedtuple('StackItem', ['token', 'state', 'prev'])):
 
     def __repr__(self):
         if self.prev:
-            return '%s.%s' % (self.token, self.state)
+            return '%s.%s' % (self.syntax_tree.symbol, self.state)
         else:
             return '0'

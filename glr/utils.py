@@ -1,7 +1,7 @@
 # coding=utf-8
 import sys
 
-from glr.tokenizer import Token
+from glr.stack import SyntaxTree
 
 
 def unique(seq):
@@ -135,7 +135,7 @@ def print_stack_item(stack_item, second_line_prefix=''):
         return '0'
 
 
-def gen_ast(token, last=False, prefix=''):
+def gen_ast(syntax_tree, last=False, prefix=''):
     line = prefix[:-1]
     if prefix:
         if not last:
@@ -144,21 +144,20 @@ def gen_ast(token, last=False, prefix=''):
             line += u'╰──'
     else:
         line = '  '
-    line += token.symbol
 
-    if token.reduced_tokens:
-        yield line, ''
-        for i, r in enumerate(token.reduced_tokens):
-            last = i == len(token.reduced_tokens) - 1
+    if syntax_tree.is_leaf():
+        yield line + syntax_tree.symbol, syntax_tree.token.value
+    else:
+        yield line + syntax_tree.symbol, ''
+        for i, r in enumerate(syntax_tree.children):
+            last = i == len(syntax_tree.children) - 1
             for line, value in gen_ast(r, last, prefix + ('   ' if last else u'  │')):
                 yield line, value
-    else:
-        yield line, token.value
 
 
-def print_ast(token):
-    assert isinstance(token, Token)
-    ast = list(gen_ast(token))
+def print_ast(syntax_tree):
+    assert isinstance(syntax_tree, SyntaxTree)
+    ast = list(gen_ast(syntax_tree))
     depth = max(len(l) for l, v in ast)
     for l, v in ast:
         print l.ljust(depth, u'.' if v else u' '), v
