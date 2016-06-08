@@ -146,7 +146,7 @@ def gen_ast(syntax_tree, last=False, prefix=''):
         line = '  '
 
     if syntax_tree.is_leaf():
-        yield line + syntax_tree.symbol, syntax_tree.token.value
+        yield line + syntax_tree.symbol, syntax_tree.token.input_term
     else:
         yield line + syntax_tree.symbol, ''
         for i, r in enumerate(syntax_tree.children):

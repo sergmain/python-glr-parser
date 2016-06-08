@@ -8,7 +8,7 @@ class Automation(object):
 
     def __init__(self, grammar_text):
         self.tokenizer = WordTokenizer()
-        self.lexer = MorphologyLexer()
+        self.lexer = MorphologyLexer(self.tokenizer)
         self.grammar_parser = GrammarParser()
 
         self.grammar = self.grammar_parser.parse(grammar_text, 'S')
@@ -19,6 +19,6 @@ class Automation(object):
         def validator(syntax_tree):
             return True
 
-        tokens = list(self.lexer.scan(self.tokenizer.scan(text)))
+        tokens = list(self.lexer.scan(text))
 
         return self.parser.parse(tokens, validator)

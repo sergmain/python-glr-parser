@@ -34,7 +34,7 @@ class SimpleRegexTokenizer(object):
         for m in self.re.finditer(text):
             if m.lastgroup not in self.discard_symbols:
                 yield Token(m.lastgroup, m.group(m.lastgroup), m.start(), m.end())
-
+        yield Token('$', '', m.end(), -1)
 
 class CharTypeTokenizer(SimpleRegexTokenizer):
     def __init__(self):

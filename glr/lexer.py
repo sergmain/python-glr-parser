@@ -27,11 +27,12 @@ class MorphologyLexer(object):
         "NUMB": "num"
     }
 
-    def __init__(self):
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
         self.morph = pymorphy2.MorphAnalyzer()
 
-    def scan(self, tokens):
-        for token in tokens:
+    def scan(self, text):
+        for token in self.tokenizer.scan(text):
             assert isinstance(token, Token)
 
             if token.symbol == 'word':
@@ -58,7 +59,4 @@ class MorphologyLexer(object):
         if not parsed:
             return None
         return parsed[0].tag
-
-morphology_lexer = MorphologyLexer()
-
 
