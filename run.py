@@ -142,6 +142,7 @@ def test4():
     grammar = GrammarParser().parse(text, 'S')
     print format_grammar(grammar)
 
+# TODO: validate symbols matching in tokenizer and grammar
 # TODO: calculate overall probability of syntax tree from rule weight
 # TODO: support multiple tokens per position (to resolve morph ambiguity and dictionary ambiguity)
 # TODO: support token lattice (resolve combined and split tokens ambiguity)

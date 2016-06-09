@@ -34,7 +34,10 @@ class MorphologyLexer(object):
         self.dictionary = {}
         for category, values in dictionaries.iteritems():
             for value in values:
-                self.dictionary[self.normal(value)] = category
+                value = self.normal(value)
+                if value in self.dictionary:
+                    raise Exception('Duplicate value in dictionaries %s and %s' % (category, self.dictionary[value]))
+                self.dictionary[value] = category
 
     def scan(self, text):
         for token in self.tokenizer.scan(text):
