@@ -73,13 +73,16 @@ def format_action_goto_table(action_goto_table):
 
 
 def format_rule(rule, ljust_symbol=0):
-    def format_params(i):
+    def format_symbol(i, symbol):
         if not rule.params or not rule.params[i]:
-            return ''
-        all_pairs = sorted((k, v) for k, values in rule.params[i].items() for v in values)
-        return '<%s>' % ','.join('%s=%s' % (k, v) if v is not True else k for k, v in all_pairs)
+            return symbol
 
-    right_symbols = [symbol + format_params(i) for i, symbol in enumerate(rule.right_symbols)]
+        all_pairs = sorted((k, v) for k, values in rule.params[i].items() for v in values)
+        if all_pairs == [('raw', True)]:
+            return '"%s"' % symbol
+        return '%s<%s>' % (symbol, ','.join('%s=%s' % (k, v) if v is not True else k for k, v in all_pairs))
+
+    right_symbols = [format_symbol(i, symbol) for i, symbol in enumerate(rule.right_symbols)]
     return '#%d: %s = %s%s' % (
         rule.index,
         rule.left_symbol.ljust(ljust_symbol),

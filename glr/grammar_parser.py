@@ -66,7 +66,7 @@ class GrammarParser(object):
                     if symbol_node.rule_index == 11:
                         right_symbols.append((symbol_node.children[0].token.input_term, dict()))
                     elif symbol_node.rule_index == 12:
-                        right_symbols.append((symbol_node.children[0].token.input_term[1:-1], {'raw': [True]}))
+                        right_symbols.append((symbol_node.children[0].token.input_term[1:-1].strip(), {'raw': [True]}))
                     elif symbol_node.rule_index == 10:
                         right_symbols.append((symbol_node.children[0].token.input_term,
                                               self._parse_labels(symbol_node.children[1].token.input_term[1:-1])))
