@@ -148,26 +148,20 @@ def test4():
 # TODO: support multiple tokens per position (to resolve morph ambiguity and dictionary ambiguity)
 # TODO: support token lattice (resolve combined and split tokens ambiguity)
 
-grammar = u"""
-Goal = Goal SAny | SAny
-SAny = S AnyTerms | AnyTerms S | S
-AnyTerms = AnyTerms AnyTerm | AnyTerm
-AnyTerm = adj | noun
-S = adj<agr-gnc=1> noun
-"""
+
 
 grammar = u"""
 S = adj<agr-gnc=1> noun
+S = noun adj<agr-gnc=-1>
 """
 
-text = u"на вешалке висят пять красивых курток и 2 вонючая шуба"
-text = u"и красивых курток и вонючая шуба и"
+text = u"на вешалке висят пять красивых курток вонючая шуба"
 
 automation = Automation(grammar, 'S')
 
 print format_grammar(automation.grammar)
 print format_tokens(automation.lexer.scan(text))
 print format_action_goto_table(automation.parser.action_goto_table)
-automation.parser.log_level = 1
+automation.parser.log_level = 0
 for syntax_tree in automation.parse(text):
     print format_syntax_tree(syntax_tree)
