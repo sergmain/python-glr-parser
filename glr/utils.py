@@ -1,5 +1,4 @@
 # coding=utf-8
-import sys
 
 import StringIO
 
@@ -89,11 +88,7 @@ def format_grammar(grammar):
 def format_tokens(tokens):
     table = [('Sym', 'Value', 'Input', 'Params')]
     for token in tokens:
-        table.append([
-            token.symbol,
-            token.value,
-            token.input_term if token.value != token.input_term else '',
-            token.params])
+        table.append((token.symbol, token.value, token.input_term, token.params))
     return format_table(table)
 
 

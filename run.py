@@ -26,7 +26,6 @@ def test1():
     Value = VARIABLES
     """
 
-
     grammar2 = u"""
     S = Sums
     Sums = Sums 'plus' Sums
@@ -48,7 +47,6 @@ def test1():
     VP = v NP
     """
 
-
     grammar = GrammarParser().parse(grammar, 'S')
     print format_grammar(grammar)
 
@@ -58,9 +56,8 @@ def test1():
     action_goto_table = generate_action_goto_table(grammar)
     print format_action_goto_table(action_goto_table)
 
-    action_goto_table = change_state_indexes(action_goto_table, {3:4, 4:3, 7:8, 8:9, 9:7})
+    action_goto_table = change_state_indexes(action_goto_table, {3: 4, 4: 3, 7: 8, 8: 9, 9: 7})
     print format_action_goto_table(action_goto_table)
-
 
     tokens = [
         Token('n', 'I'),
@@ -85,7 +82,6 @@ def test1():
 
 
 def test2():
-
     grammar = u"""
     S = NP VP
     S = S PP
@@ -114,6 +110,7 @@ def test2():
 
     res = parser.parse(tokens, reduce_validator)
 
+
 def test3():
     grammar = u"""
     S = NP VP
@@ -130,16 +127,42 @@ def test3():
         print format_syntax_tree(syntax_tree)
 
 
-text = '''
-S = NP VP | S PP
-NP = pnoun (1.2)
-     | noun
-     | adj noun noun (4,5)
-     | NP PP
-PP = prep NP (2)
-VP = verb<a=1,b> NP <a>
-NP = 'test' "test"
-'''
+def test4():
+    text = '''
+    S = NP VP | S PP
+    NP = pnoun (1.2)
+         | noun
+         | adj noun noun (4,5)
+         | NP PP
+    PP = prep NP (2)
+    VP = verb<a=1,b> NP <a>
+    NP = 'test' "test"
+    '''
 
-grammar = GrammarParser().parse(text, 'S')
-print format_grammar(grammar)
+    grammar = GrammarParser().parse(text, 'S')
+    print format_grammar(grammar)
+
+# TODO: support labeling
+# TODO: support dictionaries
+# TODO: calculate overall probability of syntax tree from rule weight
+# TODO: support multiple tokens per position (to resolve morph ambiguity and dictionary ambiguity)
+# TODO: support token lattice (resolve combined and split tokens ambiguity)
+
+grammar = u"""
+Goal = Goal SAny | SAny
+SAny = S AnyTerms | AnyTerms S | S
+AnyTerms = AnyTerms AnyTerm | AnyTerm
+AnyTerm = adj | noun
+S = adj<agr-gnc=1> noun
+"""
+
+text = u"на вешалке висят пять красивых курток и вонючая шуба"
+
+automation = Automation(grammar, 'Goal')
+
+print format_grammar(automation.grammar)
+print format_tokens(automation.lexer.scan(text))
+print format_action_goto_table(automation.parser.action_goto_table)
+automation.parser.log_level = 1
+for syntax_tree in automation.parse(text):
+    print format_syntax_tree(syntax_tree)
