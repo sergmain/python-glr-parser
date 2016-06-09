@@ -137,7 +137,7 @@ NP = pnoun (1.2)
      | adj noun noun (4,5)
      | NP PP
 PP = prep NP (2)
-VP = verb<a> NP <a>
+VP = verb<a=1,b> NP <a>
 NP = 'test' "test"
 '''
 
