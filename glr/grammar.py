@@ -18,6 +18,7 @@ class Grammar(object):
                     yield symbol
 
         self._symbols = set(all_symbols())
+        self._symbols.add('$')
         self._nonterminals = set(rule.left_symbol for rule in self._rules)
         self._terminals = self._symbols - self._nonterminals
 

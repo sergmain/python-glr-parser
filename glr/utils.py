@@ -72,6 +72,15 @@ def format_action_goto_table(action_goto_table):
     return format_table(table)
 
 
+def format_rule(rule):
+    right_symbols = [s + ('<%s>' % rule.params[i] if rule.params and rule.params[i] else '') for i, s in enumerate(rule.right_symbols)]
+    return '#%d: %s -> %s %s' % (
+            rule.index,
+            rule.left_symbol,
+            ' '.join(right_symbols),
+            '(%s)' % rule.weight if rule.weight != 1.0 else '')
+
+
 def format_grammar(grammar):
     max_symbol_len = max(len(s) for s in grammar.nonterminals)
     lines = []

@@ -1,7 +1,8 @@
 from glr.grammar import Grammar
 from glr.lr import generate_action_goto_table
 from glr.stack import StackItem
-from glr.utils import format_stack_item, format_syntax_tree
+from glr.tokenizer import Token
+from glr.utils import format_stack_item, format_syntax_tree, format_rule
 
 
 class Parser(object):
@@ -23,30 +24,43 @@ class Parser(object):
                     yield node, action
 
     # http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=DBFD4413CFAD29BC537FD98959E6B779?doi=10.1.1.39.1262&rep=rep1&type=pdf
-    def parse(self, tokens, reduce_validator=None):
+    def parse(self, reduce_by_tokens, full_math=False, reduce_validator=None):
         accepted_nodes = []
 
-        current = [StackItem.start_new()]
+        current = [StackItem.start_new()] if full_math else []
 
-        for token in tokens:
+        for token_index, token in enumerate(reduce_by_tokens):
             self.log(1, '\n\nTOKEN: %s', token)
 
-            process_reduce_nodes = current[:]
-            while process_reduce_nodes:
-                new_reduce_nodes = []
-                for node, action in self.get_by_action_type(process_reduce_nodes, token, 'R'):
-                    rule = self.grammar[action.rule_index]
-                    self.log(1, '- REDUCE: (%s) by (%s)', node, rule)
-                    reduced_nodes = node.reduce(self.action_goto_table, rule, reduce_validator)
-                    new_reduce_nodes.extend(reduced_nodes)
-                    for n in reduced_nodes:
-                        self.log('    %s', format_stack_item(n, '     '))
-                process_reduce_nodes = new_reduce_nodes
-                current.extend(new_reduce_nodes)
+            reduce_by_tokens = [token]
 
-            for node, action in self.get_by_action_type(current, token, 'A'):
-                self.log(1, '- ACCEPT: (%s)', node)
-                accepted_nodes.append(node)
+            if not full_math:
+                if token.symbol not in self.grammar.terminals:
+                    self.log(1, '- Not in grammar, interpret as end of stream')
+                    reduce_by_tokens = []
+
+                # If not full match on each token we assume rule may start or end
+                current.append(StackItem.start_new())
+                if token.symbol != '$':
+                    reduce_by_tokens.append(Token('$'))
+
+            for reduce_by_token in reduce_by_tokens:
+                process_reduce_nodes = current[:]
+                while process_reduce_nodes:
+                    new_reduce_nodes = []
+                    for node, action in self.get_by_action_type(process_reduce_nodes, reduce_by_token, 'R'):
+                        rule = self.grammar[action.rule_index]
+                        self.log(1, '- REDUCE: (%s) by (%s)', node, format_rule(rule))
+                        reduced_nodes = node.reduce(self.action_goto_table, rule, reduce_validator)
+                        new_reduce_nodes.extend(reduced_nodes)
+                        for n in reduced_nodes:
+                            self.log(1, '    %s', format_stack_item(n, '     '))
+                    process_reduce_nodes = new_reduce_nodes
+                    current.extend(new_reduce_nodes)
+
+                for node, action in self.get_by_action_type(current, reduce_by_token, 'A'):
+                    self.log(1, '- ACCEPT: (%s)', node)
+                    accepted_nodes.append(node)
 
             shifted_nodes = []
             for node, action in self.get_by_action_type(current, token, 'S'):
@@ -60,7 +74,7 @@ class Parser(object):
 
             self.log(1, '\n- STACK:')
             for node in current:
-                self.log(1, '%s', format_stack_item(node))
+                self.log(1, '    %s', format_stack_item(node, '     '))
 
         self.log(1, '\n--------------------\nACCEPTED:')
         for node in accepted_nodes:

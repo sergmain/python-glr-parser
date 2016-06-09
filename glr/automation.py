@@ -14,14 +14,11 @@ class Automation(object):
         self.grammar = self.grammar_parser.parse(grammar_text, start)
         self.parser = Parser(self.grammar)
 
-    def parse(self, text):
+    def parse(self, text, full_math=False):
 
         def validator(syntax_tree):
             return True
 
         tokens = list(self.lexer.scan(text))
 
-        # filter tokens, keep only symbols exist in grammar
-        tokens = [token for token in tokens if token.symbol in self.grammar.terminals or token.symbol == '$']
-
-        return self.parser.parse(tokens, validator)
+        return self.parser.parse(tokens, full_math, validator)

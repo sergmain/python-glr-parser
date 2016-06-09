@@ -156,9 +156,14 @@ AnyTerm = adj | noun
 S = adj<agr-gnc=1> noun
 """
 
-text = u"на вешалке висят пять красивых курток и вонючая шуба"
+grammar = u"""
+S = adj<agr-gnc=1> noun
+"""
 
-automation = Automation(grammar, 'Goal')
+text = u"на вешалке висят пять красивых курток и 2 вонючая шуба"
+text = u"и красивых курток и вонючая шуба и"
+
+automation = Automation(grammar, 'S')
 
 print format_grammar(automation.grammar)
 print format_tokens(automation.lexer.scan(text))

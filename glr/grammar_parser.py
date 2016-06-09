@@ -49,7 +49,7 @@ class GrammarParser(object):
         return labels
 
     def _scan_rules(self, grammar_str):
-        syntax_trees = self.parser.parse(self.lr_grammar_tokenizer.scan(grammar_str))
+        syntax_trees = self.parser.parse(self.lr_grammar_tokenizer.scan(grammar_str), full_math=True)
         if len(syntax_trees) > 1:
             raise Exception('Ambiguous grammar')
 
