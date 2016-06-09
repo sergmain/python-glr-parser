@@ -142,22 +142,22 @@ def test4():
     grammar = GrammarParser().parse(text, 'S')
     print format_grammar(grammar)
 
-# TODO: support labeling
-# TODO: support dictionaries
 # TODO: calculate overall probability of syntax tree from rule weight
 # TODO: support multiple tokens per position (to resolve morph ambiguity and dictionary ambiguity)
 # TODO: support token lattice (resolve combined and split tokens ambiguity)
 
-
+dictionaries = {
+    u"CLOTHES": [u"куртка", u"пальто", u"шубы"]
+}
 
 grammar = u"""
-S = adj<agr-gnc=1> noun
-S = noun adj<agr-gnc=-1>
+S = adj<agr-gnc=1> CLOTHES
+S = CLOTHES adj<agr-gnc=-1>
 """
 
 text = u"на вешалке висят пять красивых курток вонючая шуба"
 
-automation = Automation(grammar, 'S')
+automation = Automation(grammar, dictionaries, 'S')
 
 print format_grammar(automation.grammar)
 print format_tokens(automation.lexer.scan(text))

@@ -27,9 +27,14 @@ class MorphologyLexer(object):
         "NUMB": "num"
     }
 
-    def __init__(self, tokenizer):
+    def __init__(self, tokenizer, dictionaries=None):
         self.tokenizer = tokenizer
         self.morph = pymorphy2.MorphAnalyzer()
+
+        self.dictionary = {}
+        for category, values in dictionaries.iteritems():
+            for value in values:
+                self.dictionary[self.normal(value)] = category
 
     def scan(self, text):
         for token in self.tokenizer.scan(text):
@@ -38,14 +43,25 @@ class MorphologyLexer(object):
             if token.symbol == 'word':
                 morphed = self.morph.parse(token.value)
                 if morphed:
-                    token = Token(
-                        symbol=self.TAG_MAPPER.get(morphed[0].tag.POS) or token.symbol,
-                        value=morphed[0].normal_form,
-                        start=token.start,
-                        end=token.end,
-                        input_term=token.value,
-                        params=morphed[0].tag
-                    )
+                    value = morphed[0].normal_form
+                    if value in self.dictionary:
+                        token = Token(
+                            symbol=self.dictionary[value],
+                            value=value,
+                            start=token.start,
+                            end=token.end,
+                            input_term=token.input_term,
+                            params=morphed[0].tag
+                        )
+                    else:
+                        token = Token(
+                            symbol=self.TAG_MAPPER.get(morphed[0].tag.POS) or token.symbol,
+                            value=value,
+                            start=token.start,
+                            end=token.end,
+                            input_term=token.input_term,
+                            params=morphed[0].tag
+                        )
             yield token
 
     def normal(self, word):

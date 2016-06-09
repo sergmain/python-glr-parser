@@ -6,9 +6,9 @@ from glr.tokenizer import WordTokenizer
 
 
 class Automation(object):
-    def __init__(self, grammar_text, start='S'):
+    def __init__(self, grammar_text, dictionaries=None, start='S'):
         self.tokenizer = WordTokenizer()
-        self.lexer = MorphologyLexer(self.tokenizer)
+        self.lexer = MorphologyLexer(self.tokenizer, dictionaries)
         self.grammar_parser = GrammarParser()
 
         self.grammar = self.grammar_parser.parse(grammar_text, start)
