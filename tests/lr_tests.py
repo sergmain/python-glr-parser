@@ -1,6 +1,7 @@
 # coding=utf-8
 ur"""
-Example from Tomita's whitepaper
+Example from Tomita's whitepaper http://dl.acm.org/citation.cfm?id=26390  http://www.aclweb.org/anthology/J87-1004
+Masaru Tomita. 1987. An efficient augmented-context-free parsing algorithm. Comput. Linguist. 13, 1-2 (January 1987), 31-46.
 >>> text = '''
 ... S = NP VP
 ... S = S PP
@@ -20,6 +21,8 @@ Example from Tomita's whitepaper
 #5: NP = NP PP
 #6: PP = prep NP
 #7: VP = v NP
+
+States compared with jsmachines output http://jsmachines.sourceforge.net/machines/slr.html
 >>> print format_states(generate_state_graph(grammar), grammar)
 ┌────┬──────┬────┬────────────────────────────────────────────────────────────────────────┐
 │ Go │ to   │ St │ Closure                                                                │
@@ -48,6 +51,7 @@ Example from Tomita's whitepaper
 │ 12 │ prep │ 6  │                                                                        │
 └────┴──────┴────┴────────────────────────────────────────────────────────────────────────┘
 
+Table compared with jsmachines output http://jsmachines.sourceforge.net/machines/slr.html
 >>> action_goto_table = generate_action_goto_table(grammar)
 >>> print format_action_goto_table(action_goto_table)
 ┌────┬─────┬─────┬────────┬────┬────┬───┬────┬────┬────┐
@@ -68,6 +72,7 @@ Example from Tomita's whitepaper
 │ 12 │     │     │ R7, S6 │    │ R7 │   │    │ 8  │    │
 └────┴─────┴─────┴────────┴────┴────┴───┴────┴────┴────┘
 
+Remap state indexes for 1:1 matching with Tomita's table
 >>> action_goto_table = change_state_indexes(action_goto_table, {3: 4, 4: 3, 7: 8, 8: 9, 9: 7})
 >>> print format_action_goto_table(action_goto_table)
 ┌────┬─────┬─────┬────────┬────┬────┬───┬────┬────┬────┐
