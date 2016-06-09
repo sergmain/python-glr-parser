@@ -2,6 +2,8 @@
 
 import StringIO
 
+import sys
+
 from glr.stack import SyntaxTree
 
 
@@ -11,7 +13,12 @@ def unique(seq):
     return [x for x in seq if not (x in seen or seen_add(x))]
 
 
-def format_table(table):
+def inside_doctest(original_stdout=sys.stdout):
+    return original_stdout != sys.stdout
+
+
+def format_table(table, stripe=None):
+    stripe = not inside_doctest() if stripe is None else stripe
     buf = StringIO.StringIO()
 
     col_widths = [0] * len(table[0])
@@ -20,7 +27,7 @@ def format_table(table):
             col_widths[j] = max(col_widths[j], len(unicode(cell)))
 
     def print_row(i, chars, row=None):
-        if i > 0 and i % 2 == 0:
+        if stripe and i > 0 and i % 2 == 0:
             buf.write('\033[48;5;236m')
         for j, cell in enumerate(row or col_widths):
             if j == 0:
@@ -36,8 +43,10 @@ def format_table(table):
             else:
                 buf.write(chars[3:5])
 
-        buf.write('\033[m')
-        buf.write('\n')
+        if stripe:
+            buf.write('\033[m')
+        if i >= 0:
+            buf.write('\n')
 
     for i, row in enumerate(table):
         if i == 0:
@@ -47,7 +56,7 @@ def format_table(table):
         if True:
             print_row(i, u'│ │ │', row)
         if i == len(table) - 1:
-            print_row(0, u'└─┴─┘')
+            print_row(-1, u'└─┴─┘')
     # TODO: do I need to close buffer?
     return buf.getvalue()
 
@@ -129,7 +138,7 @@ def format_states(states, grammar):
             for child_state_index in child_state_indexes:
                 if (i, parent_lookahead, child_state_index) not in state_index:
                     table.append([i, parent_lookahead, child_state_index, ''])
-    format_table(table)
+    return format_table(table)
 
 
 def format_stack_item(stack_item, second_line_prefix=''):

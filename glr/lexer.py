@@ -32,12 +32,13 @@ class MorphologyLexer(object):
         self.morph = pymorphy2.MorphAnalyzer()
 
         self.dictionary = {}
-        for category, values in dictionaries.iteritems():
-            for value in values:
-                value = self.normal(value)
-                if value in self.dictionary:
-                    raise Exception('Duplicate value in dictionaries %s and %s' % (category, self.dictionary[value]))
-                self.dictionary[value] = category
+        if dictionaries:
+            for category, values in dictionaries.iteritems():
+                for value in values:
+                    value = self.normal(value)
+                    if value in self.dictionary:
+                        raise Exception('Duplicate value in dictionaries %s and %s' % (category, self.dictionary[value]))
+                    self.dictionary[value] = category
 
     def scan(self, text):
         for token in self.tokenizer.scan(text):
