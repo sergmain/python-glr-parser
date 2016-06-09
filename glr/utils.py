@@ -18,7 +18,7 @@ def format_table(table):
     col_widths = [0] * len(table[0])
     for row in table:
         for j, cell in enumerate(row):
-            col_widths[j] = max(col_widths[j], len(str(cell)))
+            col_widths[j] = max(col_widths[j], len(unicode(cell)))
 
     def print_row(i, chars, row=None):
         if i > 0 and i % 2 == 0:
@@ -28,7 +28,7 @@ def format_table(table):
                 buf.write(chars[0:2])
 
             if row:
-                buf.write(str(cell).ljust(col_widths[j]))
+                buf.write(unicode(cell).ljust(col_widths[j]))
             else:
                 buf.write(chars[1] * col_widths[j])
 
@@ -87,7 +87,7 @@ def format_grammar(grammar):
 
 
 def format_tokens(tokens):
-    table = []
+    table = [('Sym', 'Value', 'Input', 'Params')]
     for token in tokens:
         table.append([
             token.symbol,
