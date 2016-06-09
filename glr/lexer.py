@@ -59,4 +59,3 @@ class MorphologyLexer(object):
         if not parsed:
             return None
         return parsed[0].tag
-

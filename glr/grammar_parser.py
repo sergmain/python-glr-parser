@@ -1,10 +1,9 @@
 # coding=utf8
-from collections import defaultdict
 
 from glr.grammar import Rule, Grammar
 from glr.parser import Parser
 from glr.tokenizer import SimpleRegexTokenizer
-from glr.utils import flatten_syntax_tree, format_syntax_tree, format_tokens
+from glr.utils import flatten_syntax_tree
 
 
 class GrammarParser(object):
@@ -70,7 +69,7 @@ class GrammarParser(object):
                         right_symbols.append((symbol_node.children[0].token.input_term[1:-1], {'raw': True}))
                     elif symbol_node.rule_index == 10:
                         right_symbols.append((symbol_node.children[0].token.input_term,
-                                             self._parse_labels(symbol_node.children[1].token.input_term[1:-1])))
+                                              self._parse_labels(symbol_node.children[1].token.input_term[1:-1])))
 
                 yield left_symbol, weight, right_symbols
 
@@ -78,7 +77,8 @@ class GrammarParser(object):
         rules = [Rule(0, '@', (start,), False, ('',), 1.0)]
         for left_symbol, weight, right_symbols in self._scan_rules(grammar):
             if len(right_symbols) > 0:
-                rules.append(Rule(len(rules), left_symbol, tuple(s for s, l in right_symbols), False, tuple(l for s, l in right_symbols), weight))
+                rules.append(
+                    Rule(len(rules), left_symbol, tuple(s for s, l in right_symbols), False, tuple(l for s, l in right_symbols), weight))
             else:
                 raise Exception('GLR parser does not support epsilon free rules')
 

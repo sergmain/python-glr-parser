@@ -1,6 +1,7 @@
 # coding=utf-8
-import re
 from collections import namedtuple
+
+import re
 
 
 class Token(namedtuple('Token', ['symbol', 'value', 'start', 'end', 'input_term', 'params'])):
@@ -14,6 +15,7 @@ class Token(namedtuple('Token', ['symbol', 'value', 'start', 'end', 'input_term'
 
     def __repr__(self):
         return '%s' % self.symbol
+
 
 class TokenizerException(Exception):
     pass
@@ -35,6 +37,7 @@ class SimpleRegexTokenizer(object):
             if m.lastgroup not in self.discard_symbols:
                 yield Token(m.lastgroup, m.group(m.lastgroup), m.start(), m.end(), m.group(m.lastgroup), None)
         yield Token('$', '', m.end(), -1, '', None)
+
 
 class CharTypeTokenizer(SimpleRegexTokenizer):
     def __init__(self):

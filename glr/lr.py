@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple, defaultdict, OrderedDict
 
-from glr.utils import unique
 from glr.grammar import Grammar
+from glr.utils import unique
 
 
 class Item(namedtuple('Item', ['rule_index', 'dot_position'])):

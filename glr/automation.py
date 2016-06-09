@@ -5,7 +5,6 @@ from glr.tokenizer import WordTokenizer
 
 
 class Automation(object):
-
     def __init__(self, grammar_text, start='S'):
         self.tokenizer = WordTokenizer()
         self.lexer = MorphologyLexer(self.tokenizer)
@@ -15,7 +14,6 @@ class Automation(object):
         self.parser = Parser(self.grammar)
 
     def parse(self, text, full_math=False):
-
         def validator(syntax_tree):
             return True
 
