@@ -72,26 +72,24 @@ def format_action_goto_table(action_goto_table):
     return format_table(table)
 
 
-def format_rule(rule):
-    right_symbols = [s + ('<%s>' % rule.params[i] if rule.params and rule.params[i] else '') for i, s in enumerate(rule.right_symbols)]
-    return '#%d: %s -> %s %s' % (
+def format_rule(rule, ljust_symbol=0):
+    def format_params(i):
+        if not rule.params or not rule.params[i]:
+            return ''
+        all_pairs = sorted((k, v) for k, values in rule.params[i].items() for v in values)
+        return '<%s>' % ','.join('%s=%s' % (k, v) if v is not True else k for k, v in all_pairs)
+
+    right_symbols = [symbol + format_params(i) for i, symbol in enumerate(rule.right_symbols)]
+    return '#%d: %s = %s%s' % (
         rule.index,
-        rule.left_symbol,
+        rule.left_symbol.ljust(ljust_symbol),
         ' '.join(right_symbols),
-        '(%s)' % rule.weight if rule.weight != 1.0 else '')
+        '   (%g)' % rule.weight if rule.weight != 1.0 else '')
 
 
 def format_grammar(grammar):
     max_symbol_len = max(len(s) for s in grammar.nonterminals)
-    lines = []
-    for r in grammar.rules:
-        right_symbols = [s + ('<%s>' % r.params[i] if r.params[i] else '') for i, s in enumerate(r.right_symbols)]
-        lines.append('%2d | %s -> %s   %s' % (
-            r.index,
-            r.left_symbol.ljust(max_symbol_len),
-            ' '.join(right_symbols),
-            '(%s)' % r.weight if r.weight != 1.0 else ''))
-    return '\n'.join(lines)
+    return '\n'.join(format_rule(rule, max_symbol_len) for rule in grammar.rules)
 
 
 def format_tokens(tokens):
