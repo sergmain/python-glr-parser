@@ -1,5 +1,4 @@
 # coding=utf-8
-import sys
 
 from glr.automation import Automation
 from glr.grammar import Rule
@@ -9,6 +8,8 @@ from glr.lr import *
 from glr.parser import Parser
 from glr.tokenizer import Token, WordTokenizer, SimpleRegexTokenizer
 from glr.utils import *
+from glr.utils import flatten_syntax_tree
+
 
 def test1():
     dictionaries = {
@@ -129,42 +130,16 @@ def test3():
         print format_syntax_tree(syntax_tree)
 
 
-lr_grammar_tokenizer = SimpleRegexTokenizer(dict(
-    sep='=',
-    alt='\|',
-    word=r"\b\w+\b",
-    raw=r"'.+?'",
-    whitespace=r'[ \t\r\n]+',
-    minus=r'-',
-    label=r'<.+?>',
-), ['whitespace'])
-
-grammar = Grammar([
-    Rule(0, '@', ('S',), False, None, 1.0),
-    Rule(1, 'S', ('S', 'Rule'), False, None, 1.0),
-    Rule(2, 'S', ('Rule',), False, None, 1.0),
-    Rule(3, 'Rule', ('word', 'sep', 'Alternatives'), False, None, 1.0),
-    Rule(4, 'Alternatives', ('Alternatives', 'alt', 'Symbols'), False, None, 1.0),
-    Rule(5, 'Alternatives', ('Symbols', ), False, None, 1.0),
-    Rule(6, 'Symbols', ('Symbols', 'Symbol'), False, None, 1.0),
-    Rule(7, 'Symbols', ('Symbol',), False, None, 1.0),
-    Rule(8, 'Symbol', ('word', 'label'), False, None, 1.0),
-    Rule(9, 'Symbol', ('word',), False, None, 1.0),
-    Rule(10, 'Symbol', ('raw',), False, None, 1.0),
-])
-
 text = '''
 S = NP VP | S PP
-NP = pnoun | noun | adj noun | NP PP
-PP = prep NP
-VP = verb<a> NP<a>
-NP = 'test'
+NP = pnoun (1.2)
+     | noun
+     | adj noun noun (4,5)
+     | NP PP
+PP = prep NP (2)
+VP = verb<a> NP <a>
+NP = 'test' "test"
 '''
 
-#print format_tokens(lr_grammar_tokenizer.scan(text))
+grammar = GrammarParser().parse(text, 'S')
 print format_grammar(grammar)
-print format_action_goto_table(generate_action_goto_table(grammar))
-
-parser = Parser(grammar, 1)
-for syntax_tree in parser.parse(lr_grammar_tokenizer.scan(text)):
-    print format_syntax_tree(syntax_tree)

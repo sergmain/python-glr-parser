@@ -77,7 +77,12 @@ def format_grammar(grammar):
     max_symbol_len = max(len(s) for s in grammar.nonterminals)
     lines = []
     for r in grammar.rules:
-        lines.append('%2d | %s -> %s' % (r.index, r.left_symbol.ljust(max_symbol_len), ' '.join(r.right_symbols)))
+        right_symbols = [s + ('<%s>' % r.params[i] if r.params[i] else '') for i, s in enumerate(r.right_symbols)]
+        lines.append('%2d | %s -> %s   %s' % (
+            r.index,
+            r.left_symbol.ljust(max_symbol_len),
+            ' '.join(right_symbols),
+            '(%s)' % r.weight if r.weight != 1.0 else ''))
     return '\n'.join(lines)
 
 
@@ -202,3 +207,18 @@ def change_state_indexes(table, mapping):
                 if action.state in mapping:
                     actions[i] = Action(action.type, mapping[action.state], action.rule_index)
     return result
+
+
+def flatten_syntax_tree(syntax_tree, symbol):
+    """
+    Recursively traverse syntax tree until finds searched symbol.
+    If found does not go deeper.
+    """
+    if syntax_tree.symbol == symbol:
+        yield syntax_tree
+        return
+
+    if syntax_tree.children:
+        for child in syntax_tree.children:
+            for res in flatten_syntax_tree(child, symbol):
+                yield res

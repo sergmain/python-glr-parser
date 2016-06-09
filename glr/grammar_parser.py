@@ -1,63 +1,65 @@
 # coding=utf8
-from collections import defaultdict
-
 from glr.grammar import Rule, Grammar
+from glr.parser import Parser
 from glr.tokenizer import SimpleRegexTokenizer
+from glr.utils import flatten_syntax_tree, format_syntax_tree, format_tokens
 
 
 class GrammarParser(object):
-
     lr_grammar_tokenizer = SimpleRegexTokenizer(dict(
         sep='=',
-        alt='[|]',
+        alt='\|',
         word=r"\b\w+\b",
-        raw=r"\'[^\s']+\'",
+        raw=r"(?:'.+?'|\".+?\")",
         whitespace=r'[ \t\r\n]+',
-        minus=r'[-]',
-        label=r'\<.+?\>',
+        minus=r'-',
+        label=r'<.+?>',
+        weight=r'\(\d+(?:[.,]\d+)?\)',
     ), ['whitespace'])
 
-    def _scan_rules(self, grammar, start):
-        words = [start]
-        labels = []
-        edit_rule = '@'
-        edit_rule_commit = True
-        next_edit_rule_commit = True
-        for token in self.lr_grammar_tokenizer.scan(grammar):
-            if token.symbol == 'minus':
-                next_edit_rule_commit = False
-            if token.symbol == 'word' or token.symbol == 'raw':
-                words.append(token.value)
-                labels.append(None)
-            elif token.symbol == 'alt':
-                yield (edit_rule, tuple(words), edit_rule_commit, labels[1:-1])
-                words = []
-                labels = []
-            elif token.symbol == 'sep':
-                tmp = words.pop()
-                yield (edit_rule, tuple(words), edit_rule_commit, labels[1:-1])
-                edit_rule_commit = next_edit_rule_commit
-                next_edit_rule_commit = True
-                edit_rule = tmp
-                words = []
-                labels = [None]
-            elif token.symbol == 'label':
-                # "a=b, b=c, d" -> {"a": "b", "b": "c", "d": None}
-                token_value = token.value.strip().replace(" ", "")
-                label = defaultdict(list)
-                for l in token_value[1:-1].split(","):
-                    key, value = tuple(l.split("=", 1) + [None])[:2]
-                    label[key].append(value)
-                # label = dict([tuple(l.split("=", 1) + [None])[:2] for l in tokvalue[1:-1].split(",")])
-                labels[-1] = label
-        yield (edit_rule, tuple(words), edit_rule_commit, labels[1:-1])
+    grammar = Grammar([
+        Rule(0, '@', ('S',), False, None, 1.0),
+        Rule(1, 'S', ('S', 'Rule'), False, None, 1.0),
+        Rule(2, 'S', ('Rule',), False, None, 1.0),
+        Rule(3, 'Rule', ('word', 'sep', 'Options'), False, None, 1.0),
+        Rule(4, 'Options', ('Options', 'alt', 'Option'), False, None, 1.0),
+        Rule(5, 'Options', ('Option',), False, None, 1.0),
+        Rule(6, 'Option', ('Symbols', 'weight'), False, None, 1.0),
+        Rule(7, 'Option', ('Symbols',), False, None, 1.0),
+        Rule(8, 'Symbols', ('Symbols', 'Symbol'), False, None, 1.0),
+        Rule(9, 'Symbols', ('Symbol',), False, None, 1.0),
+        Rule(10, 'Symbol', ('word', 'label'), False, None, 1.0),
+        Rule(11, 'Symbol', ('word',), False, None, 1.0),
+        Rule(12, 'Symbol', ('raw',), False, None, 1.0),
+    ])
+    parser = Parser(grammar)
+
+    def _scan_rules(self, grammar):
+        syntax_trees = self.parser.parse(self.lr_grammar_tokenizer.scan(grammar))
+        if len(syntax_trees) > 1:
+            raise Exception('Ambiguous grammar')
+
+        for rule in flatten_syntax_tree(syntax_trees[0], 'Rule'):
+            left_symbol = rule.children[0].token.input_term
+            for option in flatten_syntax_tree(rule.children[2], 'Option'):
+                symbols = []
+                weight = float(
+                    option.children[1].token.input_term[1:-1].replace(',', '.')) if option.rule_index == 6 else None
+                for symbol in flatten_syntax_tree(option, 'Symbol'):
+                    if symbol.rule_index == 11:
+                        symbols.append((symbol.children[0].token.input_term, ''))
+                    elif symbol.rule_index == 12:
+                        symbols.append((symbol.children[0].token.input_term[1:-1], 'raw'))
+                    elif symbol.rule_index == 10:
+                        symbols.append((symbol.children[0].token.input_term,
+                                        symbol.children[1].token.input_term[1:-1]))
+                yield left_symbol, weight, symbols
 
     def parse(self, grammar, start='S'):
-        rules = []
-        for rulename, elems, commit, labels in self._scan_rules(grammar, start):
-            if len(elems) > 0:
-                #TODO: support weight parsing
-                rules.append(Rule(len(rules), rulename, elems, commit, labels, 1.0))
+        rules = [Rule(0, '@', (start,), False, ('',), 1.0)]
+        for left_symbol, weight, symbols in self._scan_rules(grammar):
+            if len(symbols) > 0:
+                rules.append(Rule(len(rules), left_symbol, tuple(s for s, l in symbols), False, tuple(l for s, l in symbols), weight or 1.0))
             else:
                 raise Exception('GLR parser does not support epsilon free rules')
 
