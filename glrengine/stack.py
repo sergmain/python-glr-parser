@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from itertools import chain
+from operator import itemgetter
 
 
 class StackItem(object):
@@ -23,7 +24,7 @@ class Stack(object):
     def enumerate_active(self):
         i = 0
         while i < len(self.active):
-            yield i, self.active[i]
+            yield i, list(self.active)[i]
             i += 1
 
     def shift(self, source, token, state):
@@ -72,20 +73,20 @@ class Stack(object):
 
     def merge(self):
         merged_s = {}
-        self.previously_active = self.active[:self.count_active]
-        for node in self.active[self.count_active:]:
+        self.previously_active = list(self.active)[:self.count_active]
+        for node in list(self.active)[self.count_active:]:
             state = node.data
             if state in merged_s:
                 merged_s[state].prev.update(node.prev)
             else:
                 merged_s[state] = node
-        self.active = merged_s.values()
+        self.active = list(merged_s.values())
         self.count_active = len(self.active)
 
     def dump(self):
         # print "GSS HAS", self.count_active, "ACTIVE STATES"
         for a in self.active:
-            print self.A.itemsetstr(self.A.kernel(self.A.LR0[a.data]), a.data)
+            print (self.A.itemsetstr(self.A.kernel(self.A.LR0[a.data]), a.data))
 
     def accepts(self):
         AC = self.A.ACTION

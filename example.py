@@ -11,6 +11,6 @@ grammar = u"""
 
 glr = GLRParser(grammar, dictionaries=dictionaries, debug=False)
 
-text = u"на вешалке висят пять красивых курток и вонючая шуба"
+text = u"на вешалке висят пять красивых курток и красная шуба"
 for parsed in glr.parse(text):
-    print "FOUND:", parsed
+    print("FOUND:", parsed)

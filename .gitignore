@@ -30,3 +30,4 @@ pip-log.txt
 # Mac OS X
 .DS_Store
 
+__init__.*

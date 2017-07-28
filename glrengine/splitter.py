@@ -7,7 +7,7 @@ class GLRSplitter(object):
 
     def clear(self, text):
         # удалить все символы из текста, кроме тех, которые точно разберет парсер
-        text = re.sub(ur'[^\w\d\s\-\n\.\(\)\{\}\[\]\"\'«»`%,:_]', " ", text, flags=re.M | re.U | re.I)
+        text = re.sub(r'[^\w\d\s\-\n\.\(\)\{\}\[\]\"\'«»`%,:_]', " ", text, flags=re.M | re.U | re.I)
         return text
 
     def __call__(self, text):

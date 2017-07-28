@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
-from itertools import izip, chain
-from scanner import make_scanner
-from lr import *
+from itertools import chain
+from glrengine.scanner import make_scanner
+from glrengine.lr import *
+import functools
 
 lr_grammar_scanner = make_scanner(
     sep='=',
@@ -73,7 +74,7 @@ class RuleSet(dict):
             else:
                 must_cleanup |= self.remove_epsilon(eps, epsilons)
         if must_cleanup:
-            rules = sorted(self[i] for i in xrange(self.rules_count) if self[i] is not None)
+            rules = sorted(self[i] for i in range(self.rules_count) if self[i] is not None)
             epsilons = self.fill(rules)
             if epsilons:
                 #print "D'oh ! I left epsilon rules in there !", epsilons
@@ -121,7 +122,7 @@ class RuleSet(dict):
                     old = len(E)
                     E = E.union(elems[:i] + elems[i + 1:]
                                 for elems in E
-                                for i in xrange(len(elems))
+                                for i in range(len(elems))
                                 if elems[i] == eps)
                 #print "Created variants", E
                 for elems in E:
@@ -166,8 +167,8 @@ class Parser(object):
         self.kw_set = set(scanner_kw)
         self.kw_set.add('$')
         self.R = RuleSet(make_rules(start_sym, grammar, self.kw_set))
-        self.I = set((r, i) for r in xrange(self.R.rules_count)
-                     for i in xrange(len(self.R[r][1]) + 1))
+        self.I = set((r, i) for r in range(self.R.rules_count)
+                     for i in range(len(self.R[r][1]) + 1))
         self.precompute_next_items()
         self.compute_lr0()
         self.LR0 = list(sorted(self.LR0))
@@ -179,17 +180,17 @@ class Parser(object):
 
     def __str__(self):
         return '\n'.join(self.R[r][0] + ' = ' + ' '.join(self.R[r][1])
-                         for r in xrange(self.R.rules_count))
+                         for r in range(self.R.rules_count))
 
     def conflicts(self):
         "Returns the list of conflicts in the ACTION table."
-        return filter(lambda (i, t): len(self.ACTION[i][t]) > 1,
+        return filter(lambda i, t: len(self.ACTION[i][t]) > 1,
                       ((i, t) for i, row in enumerate(self.ACTION)
                        for t in row.iterkeys()))
 
     def count_conflicts(self):
         "Returns the count of conflicts in the ACTION table."
-        return reduce(lambda a, b: a + (len(b) > 1 and 1 or 0),
+        return functools.reduce(lambda a, b: a + (len(b) > 1 and 1 or 0),
                       (a for row in self.ACTION for a in row.itervalues()),
                       0)
 
@@ -212,7 +213,7 @@ class Parser(object):
             x = stack.pop()
             self.LR0.add(x)
             F = follow(x, self.R)
-            for t, s in F.iteritems():
+            for t, s in F.items():
                 s = tuple(sorted(s))
                 if s not in self.LR0:
                     stack.append(s)
@@ -254,7 +255,7 @@ class Parser(object):
         self.GOTO = []
         for s in self.LR0:
             f = {}
-            for tok, dest in follow(s, self.R).iteritems():
+            for tok, dest in follow(s, self.R).items():
                 f[tok] = self.LR0_idx[self.closure(dest)]
             self.GOTO.append(f)
 
@@ -270,7 +271,7 @@ class Parser(object):
         return ret
 
     def precompute_next_items(self):
-        self.next_list = dict((k, set()) for k in self.R if type(k) is str or type(k) is unicode)
+        self.next_list = dict((k, set()) for k in self.R if type(k) is str)
         for item in self.I:
             r, i = item
             n, e, c = self.R[r]
@@ -311,11 +312,11 @@ class Parser(object):
         """
         self.compute_GOTO()
         self.ACTION = []
-        for s, g in izip(self.LR0, self.GOTO):
+        for s, g in zip(self.LR0, self.GOTO):
             action = self.init_row()
 
             # свертки
-            for r, i in ifilter(lambda (r, i): i == len(self.R[r][1]), s):
+            for r, i in filter(lambda r_i: r_i[1] == len(self.R[r_i[0]][1]), s):
                 if not r:
                     action['$'].append(('A',))
                 else:
@@ -323,7 +324,7 @@ class Parser(object):
                         action[kw].append(('R', r))
 
             # переносы
-            for tok, dest in g.iteritems():
+            for tok, dest in g.items():
                 action[tok].append(('S', dest))
 
             # commit
@@ -335,7 +336,7 @@ class Parser(object):
         """
 
         def ac_str(c):
-            return ''.join(imap(unicode, c))
+            return ''.join(c)
 
         def cell(i, kw):
             if i >= 0:
@@ -344,9 +345,9 @@ class Parser(object):
                 return kw != '@' and str(kw) or ''
 
         def col_width(kw):
-            return reduce(max, chain([(type(kw) is str or type(kw) is unicode) and len(kw) or kw],
+            return functools.reduce(max, chain([(type(kw) is str) and len(kw) or kw],
                                      (len(cell(i, kw))
-                                      for i in xrange(len(self.ACTION)))))
+                                      for i in range(len(self.ACTION)))))
 
         col_labels = sorted(self.kw_set,
                             key=lambda x: x in self.R and '|' + x
@@ -356,25 +357,24 @@ class Parser(object):
 
         def row(i):
             return ' | '.join(cell(i, kw).center(cw)
-                              for kw, cw in izip(col_labels, col_widths))
+                              for kw, cw in zip(col_labels, col_widths))
 
         header = '    | ' + row(-1) + '\n'
         return header + '\n'.join(('%3i | ' % i) + row(i)
-                                  for i in xrange(len(self.ACTION)))
+                                  for i in range(len(self.ACTION)))
 
     def dump_sets(self):
         """
             Pretty-print all LR(0) item sets.
         """
         for i, lrset in enumerate(self.LR0):
-            print self.itemsetstr(lrset, i)
-            print
+            print(self.itemsetstr(lrset, i))
 
     def itemset(self, i):
         return self.itemsetstr(self.LR0[i], i)
 
     @property
     def unused_rules(self):
-        check = lambda i: reduce(lambda a, b: a and i not in b, self.LR0, True)
+        check = lambda i: functools.reduce(lambda a, b: a and i not in b, self.LR0, True)
         unused_rule_indices = set(x[0] for x in filter(check, self.I))
         return set(self.R[x][0] for x in unused_rule_indices)

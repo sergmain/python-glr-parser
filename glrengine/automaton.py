@@ -2,11 +2,11 @@
 from glrengine.normalizer import morph_parser
 from glrengine.labels import LABELS_CHECK
 from glrengine.parser import Parser
-from itertools import ifilter, chain
+from itertools import chain
 from glrengine.stack import Stack
 from glrengine.scanner import token_line_col
 
-INITIAL_TOKEN = ('#', '#', 0)
+INITIAL_TOKEN = ('$', '$', 0)
 
 
 class GLRAutomaton(Parser):
@@ -52,7 +52,7 @@ class GLRAutomaton(Parser):
                     # raw-слова в кавычках
                     raw_token = "'%s'" % token[1]
                     if raw_token in self.ACTION[state]:
-                        for r, rule in ifilter(lambda x: x[0] == 'R', self.ACTION[state][raw_token]):
+                        for r, rule in filter(lambda x: x[0] == 'R', self.ACTION[state][raw_token]):
                             self.debug("- Reduce")
                             self.debug("-- Actions", self.ACTION[state][raw_token])
                             self.debug("-- Raw token", node, rule)
@@ -63,7 +63,7 @@ class GLRAutomaton(Parser):
 
                     # обычные состояния
                     if labels_ok:
-                        for r, rule in ifilter(lambda x: x[0] == 'R', chain(*(self.ACTION[state][t] for t in token[0]))):
+                        for r, rule in filter(lambda x: x[0] == 'R', chain(*(self.ACTION[state][t] for t in token[0]))):
                             self.debug("- Reduce")
                             self.debug("-- Actions", self.ACTION[state])
                             self.debug("-- Normal", node, rule)
@@ -74,7 +74,7 @@ class GLRAutomaton(Parser):
 
                     # имитация конца предложения
                     if labels_ok:
-                        for r, rule in ifilter(lambda x: x[0] == 'R', self.ACTION[state]["$"]):
+                        for r, rule in filter(lambda x: x[0] == 'R', self.ACTION[state]["$"]):
                             self.debug("- Reduce")
                             self.debug("-- Actions", self.ACTION[state])
                             self.debug("-- EOS", node, rule)
@@ -105,20 +105,20 @@ class GLRAutomaton(Parser):
 
                 # перенос
                 stack.count_active = len(stack.active)
-                for node in (stack.active[i] for i in xrange(len(stack.active))):
+                for node in (list(stack.active)[i] for i in range(len(stack.active))):
                     # из стека могут удаляться состояния, так что верхний длинный for правда оказался нужен
                     state = node.data
 
                     # raw-слова в кавычках
                     raw_token = "'%s'" % token[1]
                     if raw_token in self.ACTION[state]:
-                        for r, state in ifilter(lambda x: x[0] == 'S',  self.ACTION[state][raw_token]):
+                        for r, state in filter(lambda x: x[0] == 'S',  self.ACTION[state][raw_token]):
                             self.debug("- Shift")
                             self.debug("-- Raw", node, token)
                             stack.shift(node, (token,), state)
 
                     # обычные состояния
-                    for r, state in ifilter(lambda x: x[0] == 'S',  chain(*(self.ACTION[state][t] for t in token[0]))):
+                    for r, state in filter(lambda x: x[0] == 'S',  chain(*(self.ACTION[state][t] for t in token[0]))):
                         self.debug("- Shift")
                         self.debug("-- Normal", node, token)
                         stack.shift(node, (token,), state)
@@ -157,9 +157,9 @@ class GLRAutomaton(Parser):
 
     def check_labels(self, tokens, labels):
         self.debug("- Checking labels...", labels)
-        for i in xrange(len(labels)):
+        for i in range(len(labels)):
             if labels[i]:
-                for label_key, label_values in labels[i].iteritems():
+                for label_key, label_values in labels[i].items():
                     for label_value in label_values:
                         self.debug("-- Check label:", label_key, label_value)
                         ok = LABELS_CHECK[label_key](label_value, tokens, i)
@@ -169,8 +169,11 @@ class GLRAutomaton(Parser):
         return True
 
     def without_first_word(self, text, tokens):
-        new_text = text[tokens[1][2]:]
-        new_tokens = [(token[0], token[1], token[2] - tokens[1][2], token[3], token[4]) for token in tokens[1:]]
+        i = 1
+        if len(tokens) == 1:
+            return '', []
+        new_text = text[tokens[i][2]:]
+        new_tokens = [(token[0], token[1], token[2] - tokens[i][2], token[3], token[4]) for token in tokens[i:]]
         return new_text, new_tokens
 
     def validate_ast(self, ast):
@@ -178,4 +181,4 @@ class GLRAutomaton(Parser):
 
     def debug(self, *args):
         if self.debug_mode:
-            print(" ".join(map(unicode, args)))
+            print(" ".join(args))

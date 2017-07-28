@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 __all__ = ["GLRParser"]
 
-from glrengine import GLRScanner, GLRAutomaton, GLRSplitter, morph_parser
+from glrengine.scanner import GLRScanner
+from glrengine.automaton import GLRAutomaton
+from glrengine.splitter import GLRSplitter
+from glrengine.normalizer import morph_parser
 
 
 class GLRParser(object):
@@ -47,7 +50,7 @@ class GLRParser(object):
                 grammar_rules += u"\n%s = '%s'" % (dict_name, "' | '".join(morphed))
 
         if debug:
-            print grammar_rules
+            print(grammar_rules)
 
         parser_rules = self.DEFAULT_PARSER
         parser_rules.update({"discard_names": self.DEFAULT_PARSER_DISCARD_NAMES})
