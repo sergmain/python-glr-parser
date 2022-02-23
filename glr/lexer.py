@@ -33,7 +33,7 @@ class MorphologyLexer(object):
 
         self.dictionary = {}
         if dictionaries:
-            for category, values in dictionaries.iteritems():
+            for category, values in dictionaries.items():
                 for value in values:
                     value = self.normal(value)
                     if value in self.dictionary:

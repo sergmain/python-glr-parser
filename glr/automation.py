@@ -20,7 +20,7 @@ class Automation(object):
             tokens = [child.token for child in syntax_tree.children]
             for i, token in enumerate(tokens):
                 params = rule.params[i]
-                for label_key, label_values in params.iteritems():
+                for label_key, label_values in params.items():
                     for label_value in label_values:
                         ok = LABELS_CHECK[label_key](label_value, tokens, i)
                         if not ok:

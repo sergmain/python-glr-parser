@@ -14,7 +14,7 @@ class Parser(object):
 
     def log(self, level, pattern, *args):
         if level <= self.log_level:
-            print pattern % args
+            print(pattern % args)
 
     def get_by_action_type(self, nodes, token, action_type):
         for node in nodes:

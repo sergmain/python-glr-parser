@@ -22,12 +22,12 @@ def inside_doctest(original_stdout=sys.stdout):
 
 def format_table(table, stripe=None):
     stripe = not inside_doctest() if stripe is None else stripe
-    buf = StringIO.StringIO()
+    buf = StringIO()
 
     col_widths = [0] * len(table[0])
     for row in table:
         for j, cell in enumerate(row):
-            col_widths[j] = max(col_widths[j], len(unicode(cell)))
+            col_widths[j] = max(col_widths[j], len(str(cell)))
 
     def print_row(i, chars, row=None):
         if stripe and i > 0 and i % 2 == 0:
@@ -37,7 +37,7 @@ def format_table(table, stripe=None):
                 buf.write(chars[0:2])
 
             if row:
-                buf.write(unicode(cell).ljust(col_widths[j]))
+                buf.write(str(cell).ljust(col_widths[j]))
             else:
                 buf.write(chars[1] * col_widths[j])
 

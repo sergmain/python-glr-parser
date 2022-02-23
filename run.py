@@ -48,16 +48,16 @@ def test1():
     """
 
     grammar = GrammarParser().parse(grammar, 'S')
-    print format_grammar(grammar)
+    print(format_grammar(grammar))
 
     states = generate_state_graph(grammar)
-    print format_states(states, grammar)
+    print(format_states(states, grammar))
 
     action_goto_table = generate_action_goto_table(grammar)
-    print format_action_goto_table(action_goto_table)
+    print(format_action_goto_table(action_goto_table))
 
     action_goto_table = change_state_indexes(action_goto_table, {3: 4, 4: 3, 7: 8, 8: 9, 9: 7})
-    print format_action_goto_table(action_goto_table)
+    print(format_action_goto_table(action_goto_table))
 
     tokens = [
         Token('n', 'I'),
@@ -74,7 +74,7 @@ def test1():
     ]
 
     def reduce_validator(syntax_tree):
-        print 'LABELS: ', syntax_tree
+        print('LABELS: ', syntax_tree)
         return True
 
     parser = Parser(grammar)
@@ -99,11 +99,11 @@ def test2():
     parser = Parser(grammar)
 
     tokenizer = WordTokenizer()
-    print format_tokens(tokenizer.scan(u'Я видел того человека в той квартире с таким телескопом'))
+    print(format_tokens(tokenizer.scan(u'Я видел того человека в той квартире с таким телескопом')))
 
     lexer = MorphologyLexer(tokenizer)
     tokens = list(lexer.scan(u'Я видел того человека в той квартире с таким телескопом'))
-    print format_tokens(tokens)
+    print(format_tokens(tokens))
 
     def reduce_validator(syntax_tree):
         return True
@@ -124,7 +124,7 @@ def test3():
     """
     automation = Automation(grammar)
     for syntax_tree in automation.parse(u'Я видел того человека в той квартире с таким телескопом'):
-        print format_syntax_tree(syntax_tree)
+        print(format_syntax_tree(syntax_tree))
 
 
 def test4():
@@ -140,7 +140,7 @@ def test4():
     '''
 
     grammar = GrammarParser().parse(text, 'S')
-    print format_grammar(grammar)
+    print( format_grammar(grammar))
 
 # TODO: validate symbols matching in tokenizer and grammar
 # TODO: calculate overall probability of syntax tree from rule weight
@@ -160,9 +160,9 @@ text = u"на вешалке висят пять красивых курток �
 
 automation = Automation(grammar, dictionaries, 'S')
 
-print format_grammar(automation.grammar)
-print format_tokens(automation.lexer.scan(text))
-print format_action_goto_table(automation.parser.action_goto_table)
+print( format_grammar(automation.grammar))
+print( format_tokens(automation.lexer.scan(text)))
+print( format_action_goto_table(automation.parser.action_goto_table))
 automation.parser.log_level = 0
 for syntax_tree in automation.parse(text):
-    print format_syntax_tree(syntax_tree)
+    print(format_syntax_tree(syntax_tree))

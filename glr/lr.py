@@ -42,7 +42,7 @@ def follow(itemset, grammar):
             result[lookahead] = []
         result[lookahead].extend(tmp)
 
-    for lookahead, itemset in result.iteritems():
+    for lookahead, itemset in result.items():
         yield lookahead, unique(itemset)
 
 
