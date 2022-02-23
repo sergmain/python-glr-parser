@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from itertools import ifilter, imap
 
 
 def expand_item(item, R):
@@ -8,7 +7,7 @@ def expand_item(item, R):
 
 
 def expand_itemset(itemset, R):
-    return imap(lambda x: expand_item(x, R), itemset)
+    return map(lambda x: expand_item(x, R), itemset)
 
 
 def expand_itemset2(itemset, R):
@@ -90,4 +89,4 @@ def kernel(itemset):
     """
         The kernel items in this item set
     """
-    return set(ifilter(lambda (r, i): not r or i, itemset))
+    return set(filter(lambda r, i: not r or i, itemset))

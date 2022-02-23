@@ -48,12 +48,12 @@ class GLRScanner(object):
                 del tokens[d]
 
         # Check there is no undefined group in an assertion
-        for k, v in tokens.iteritems():
-            bad_groups = filter(lambda g: g not in tokens,
-                                check_groups.findall(v))
+        for k, v in tokens.items():
+            bad_groups = list(filter(lambda g: g not in tokens,
+                                     check_groups.findall(v)))
             if bad_groups:
-                print "Unknown groups", bad_groups
-        pattern_gen = ('(?P<%s>%s)' % (k, v) for k, v in tokens.iteritems())
+                print( "Unknown groups", bad_groups)
+        pattern_gen = ('(?P<%s>%s)' % (k, v) for k, v in tokens.items())
         if self.re.pattern:
             pattern_gen = chain((self.re.pattern,), pattern_gen)
         self.re = re.compile('|'.join(pattern_gen), re.M | re.U | re.I)
@@ -96,8 +96,8 @@ class GLRScanner(object):
 
             try:
                 tokvalue = m.group(tokname)
-            except IndexError, ie:
-                print "No such group", tokname
+            except:
+                print("No such group", tokname)
 
             tokpos = m.start()
             if tokname in self.state_leave and states[-1] == self.state_leave[tokname]:
@@ -111,7 +111,7 @@ class GLRScanner(object):
 
         if pos != len(text):
             msg = 'tokenizer stopped at pos %r of %r in "%s" at "%s"' % (pos, len(text), text, text[pos:pos + 3])
-            print msg
+            print(msg)
             raise ScannerException(msg)
 
 
