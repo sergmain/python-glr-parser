@@ -1,5 +1,5 @@
 # coding=utf-8
-ur"""
+u"""
 Example from Tomita's whitepaper http://dl.acm.org/citation.cfm?id=26390  http://www.aclweb.org/anthology/J87-1004
 Masaru Tomita. 1987. An efficient augmented-context-free parsing algorithm. Comput. Linguist. 13, 1-2 (January 1987), 31-46.
 >>> text = '''
