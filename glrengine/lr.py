@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import functools
 
 
 def expand_item(item, R):
@@ -21,13 +22,16 @@ def itemstr(item, R):
     return ("[%s -> %s . %s" % (n, ' '.join(e[:i]), ' '.join(e[i:]))).strip() + ']'
 
 
+# TODO debug isn't working correctly right now
 def itemsetstr(itemset, R, label=''):
-    items = map(lambda x: itemstr(x, R), sorted(itemset))
-    width = reduce(lambda a, b: max(a, len(b)), items, 3)
-    label = label and '[' + unicode(label) + ']' or ''
+    items = map(lambda x: itemstr(tuple(x), R), sorted(itemset))
+    # width = functools.reduce(lambda a, b: max(a, len(b)), items, 3)
+    width = 0
+    # label = label and '[' + unicode(label) + ']' or ''
+    label = label and '[' + str(label) + ']' or ''
     build = ["+-%s%s-+" % (label, '-' * (width - len(label)))]
-    build.extend("| %-*s |" % (width, item) for item in items)
-    build.append("+-" + "-" * width + '-+')
+    # build.extend("| %-*s |" % (width, item) for item in items)
+    # build.append("+-" + "-" * width + '-+')
     return '\n'.join(build)
 
 
@@ -89,4 +93,7 @@ def kernel(itemset):
     """
         The kernel items in this item set
     """
-    return set(filter(lambda r, i: not r or i, itemset))
+    check = functools.reduce(lambda r, i: not r or i, itemset)
+    return set(check)
+
+    # return set(filter(lambda r, i: not r or i, itemset))

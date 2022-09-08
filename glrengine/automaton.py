@@ -177,4 +177,5 @@ class GLRAutomaton(Parser):
 
     def debug(self, *args):
         if self.debug_mode:
-            print(" ".join(args))
+            # print(" ".join(args))
+            print("".join(str(tup) for tup in args))

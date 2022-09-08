@@ -9,7 +9,7 @@ grammar = u"""
     S = adj<agr-gnc=1> CLOTHES
 """
 
-glr = GLRParser(grammar, dictionaries=dictionaries, debug=False)
+glr = GLRParser(grammar, dictionaries=dictionaries, debug=True)
 
 text = u"на вешалке висят пять красивых курток и вонючая шуба"
 for parsed in glr.parse(text):
