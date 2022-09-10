@@ -105,7 +105,7 @@ class GLRAutomaton(Parser):
 
                 # перенос
                 stack.count_active = len(stack.active)
-                for node in (stack.active[i] for i in range(len(stack.active))):
+                # for node in (stack.active[i] for i in range(len(stack.active))):
                 for node in (list(stack.active)[i] for i in range(len(stack.active))):
                     # из стека могут удаляться состояния, так что верхний длинный for правда оказался нужен
                     state = node.data
