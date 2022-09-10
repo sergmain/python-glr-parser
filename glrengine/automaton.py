@@ -6,7 +6,7 @@ from itertools import chain
 from glrengine.stack import Stack
 from glrengine.scanner import token_line_col
 
-INITIAL_TOKEN = ('#', '#', 0)
+INITIAL_TOKEN = ('$', '$', 0)
 
 
 class GLRAutomaton(Parser):
