@@ -33,16 +33,32 @@ class GLRNormalizer(object):
         for token in tokens:
             tokname, tokvalue, tokpos = token
             orig_tokvalue = tokvalue
-            tokparams = []
+            multitag = None # multitag collects all grammemes of lemma forms
             if tokname == "word":
                 morphed = self.morph.parse(tokvalue)
-                if morphed:
-                    tokvalue = morphed[0].normal_form
-                    tokname = self.TAG_MAPPER.get(morphed[0].tag.POS) or tokname
-                    # tokparams = unicode(morphed[0].tag).lower().split(",")
-                    tokparams = morphed[0].tag
-                    # print tokname, tokvalue, tokpos, tokparams, orig_tokvalue
-            results.append((tokname, tokvalue, tokpos, tokparams, orig_tokvalue))
+                for lemma in morphed:
+                    supported_tag = self.TAG_MAPPER.get(lemma.tag.POS)
+                    if supported_tag:
+                        current_tokname = {supported_tag}
+                    else:
+                        if not isinstance(tokname, set):
+                            current_tokname = {tokname}
+                        else:
+                            current_tokname = tokname
+                    if not multitag:
+                        multitag = self.morph.TagClass(",".join(lemma.tag.grammemes))
+                        tokvalue = lemma.normal_form
+                        tokname = current_tokname
+                    else:
+                        # tokname is a set of word pos tags, e.g. 
+                        # set(['noun', 'adj']) for чёрный
+                        tokname = tokname | current_tokname
+                        multitag._grammemes_cache =  multitag.grammemes | lemma.tag.grammemes
+                        multitag._str = ",".join(multitag.grammemes) # not required, but useful for debugging
+            else:
+                tokname = {tokname}
+            # print tokname, tokvalue, tokpos, multitag, orig_tokvalue
+            results.append((tokname, tokvalue, tokpos, multitag, orig_tokvalue))
         return results
 
     def normal(self, word):
