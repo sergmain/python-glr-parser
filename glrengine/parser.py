@@ -16,7 +16,6 @@ lr_grammar_scanner = make_scanner(
     discard_names=('whitespace',)
 )
 
-
 def make_rules(start, grammar, kw):
     words = [start]
     labels = []
@@ -27,7 +26,7 @@ def make_rules(start, grammar, kw):
     for tokname, tokvalue, tokpos in lr_grammar_scanner(grammar):
         if tokname == 'minus':
             next_edit_rule_commit = False
-        if tokname == 'word' or tokname == 'raw':
+        elif tokname == 'word' or tokname == 'raw':
             words.append(tokvalue)
             labels.append(None)
             kw.add(tokvalue)
@@ -120,10 +119,7 @@ class RuleSet(dict):
                 old = 0
                 while len(E) != old:
                     old = len(E)
-                    E = E.union(elems[:i] + elems[i + 1:]
-                                for elems in E
-                                for i in range(len(elems))
-                                if elems[i] == eps)
+                    E = self.union_elements(E, eps)
                 #print "Created variants", E
                 for elems in E:
                     if len(elems) == 0:
@@ -135,6 +131,16 @@ class RuleSet(dict):
                         #
             i += 1
             #
+
+    @staticmethod
+    def union_elements(E, eps):
+        print("union before: ", E, eps)
+        U = E.union(elems[:i] + elems[i + 1:]
+                       for elems in E
+                       for i in range(len(elems))
+                       if elems[i] == eps)
+        print("union after: ", U)
+        return U
 
     def remove_epsilon(self, eps, epsilons):
         must_cleanup = False
@@ -163,7 +169,9 @@ class RuleSet(dict):
 
 
 class Parser(object):
-    def __init__(self, start_sym, grammar, scanner_kw=[]):
+    def __init__(self, start_sym, grammar, scanner_kw=None):
+        if scanner_kw is None:
+            scanner_kw = []
         self.kw_set = set(scanner_kw)
         self.kw_set.add('$')
         self.R = RuleSet(make_rules(start_sym, grammar, self.kw_set))

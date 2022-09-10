@@ -166,3 +166,16 @@ print( format_action_goto_table(automation.parser.action_goto_table))
 automation.parser.log_level = 0
 for syntax_tree in automation.parse(text):
     print(format_syntax_tree(syntax_tree))
+
+print('test 1')
+test1()
+
+print('test 2')
+test2()
+
+print('test 4')
+test4()
+
+print('test 3')
+test3()
+

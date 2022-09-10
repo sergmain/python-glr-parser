@@ -12,7 +12,7 @@ Masaru Tomita. 1987. An efficient augmented-context-free parsing algorithm. Comp
 ... VP = v NP
 ... '''
 >>> grammar = GrammarParser().parse(text)
->>> print format_grammar(grammar)
+>>> print( format_grammar(grammar) )
 #0: @  = S
 #1: S  = NP VP
 #2: S  = S PP
@@ -23,7 +23,7 @@ Masaru Tomita. 1987. An efficient augmented-context-free parsing algorithm. Comp
 #7: VP = v NP
 
 States compared with jsmachines output http://jsmachines.sourceforge.net/machines/slr.html
->>> print format_states(generate_state_graph(grammar), grammar)
+>>> print( format_states(generate_state_graph(grammar), grammar) )
 ┌────┬──────┬────┬────────────────────────────────────────────────────────────────────────┐
 │ Go │ to   │ St │ Closure                                                                │
 ├────┼──────┼────┼────────────────────────────────────────────────────────────────────────┤
@@ -35,13 +35,13 @@ States compared with jsmachines output http://jsmachines.sourceforge.net/machine
 │ 0  │ det  │ 4  │ NP -> det.n                                                            │
 │ 1  │ PP   │ 5  │ S -> S PP.                                                             │
 │ 1  │ prep │ 6  │ NP -> .n; NP -> .det n; NP -> .NP PP; PP -> prep.NP                    │
-│ 6  │ det  │ 4  │                                                                        │
 │ 6  │ n    │ 3  │                                                                        │
+│ 6  │ det  │ 4  │                                                                        │
 │ 2  │ VP   │ 7  │ S -> NP VP.                                                            │
 │ 2  │ PP   │ 8  │ NP -> NP PP.                                                           │
 │ 2  │ v    │ 9  │ NP -> .n; NP -> .det n; NP -> .NP PP; VP -> v.NP                       │
-│ 9  │ det  │ 4  │                                                                        │
 │ 9  │ n    │ 3  │                                                                        │
+│ 9  │ det  │ 4  │                                                                        │
 │ 4  │ n    │ 10 │ NP -> det n.                                                           │
 │ 6  │ NP   │ 11 │ NP -> NP.PP; PP -> .prep NP; PP -> prep NP.                            │
 │ 11 │ PP   │ 8  │                                                                        │
@@ -53,7 +53,7 @@ States compared with jsmachines output http://jsmachines.sourceforge.net/machine
 
 Table compared with jsmachines output http://jsmachines.sourceforge.net/machines/slr.html
 >>> action_goto_table = generate_action_goto_table(grammar)
->>> print format_action_goto_table(action_goto_table)
+>>> print( format_action_goto_table(action_goto_table) )
 ┌────┬─────┬─────┬────────┬────┬────┬───┬────┬────┬────┐
 │    │ n   │ det │ prep   │ v  │ $  │ S │ NP │ PP │ VP │
 ├────┼─────┼─────┼────────┼────┼────┼───┼────┼────┼────┤
@@ -74,7 +74,7 @@ Table compared with jsmachines output http://jsmachines.sourceforge.net/machines
 
 Remap state indexes for 1:1 matching with Tomita's table
 >>> action_goto_table = change_state_indexes(action_goto_table, {3: 4, 4: 3, 7: 8, 8: 9, 9: 7})
->>> print format_action_goto_table(action_goto_table)
+>>> print( format_action_goto_table(action_goto_table) )
 ┌────┬─────┬─────┬────────┬────┬────┬───┬────┬────┬────┐
 │    │ det │ n   │ prep   │ v  │ $  │ S │ NP │ PP │ VP │
 ├────┼─────┼─────┼────────┼────┼────┼───┼────┼────┼────┤

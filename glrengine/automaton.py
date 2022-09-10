@@ -142,9 +142,13 @@ class GLRAutomaton(Parser):
             else:
                 self.debug("at end of text")
 
-        toks = set(kw for st in last_states for kw in self.kw_set
-                       if len(self.ACTION[st.data][kw]) > 0
-                          and kw not in self.R and kw != '$')
+        toks = set(kw for st in last_states for kw in self.kw_set if len(self.ACTION[st.data][kw]) > 0 and kw not in self.R and kw != '$')
+        arr = []
+        for st in last_states:
+            for kw in self.kw_set:
+                if len(self.ACTION[st.data][kw]) > 0 and kw not in self.R and kw != '$':
+                    arr.append(kw)
+        toks1 = set(arr)
 
         if not toks:
             self.debug("Text", text)

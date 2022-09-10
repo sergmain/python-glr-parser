@@ -214,7 +214,7 @@ def change_state_indexes(table, mapping):
     :param mapping:
     :return:
     """
-    from lr import Action
+    from glr.lr import Action
 
     reverse_map = dict((v, k) for k, v in mapping.items())
     result = [table[reverse_map.get(i, i)] for i in range(len(table))]

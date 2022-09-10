@@ -18,7 +18,7 @@ Test spacing options
 ... S = e        f
 ... S = g\t\th
 ... '''
->>> print format_grammar(GrammarParser().parse(text))
+>>> print( format_grammar(GrammarParser().parse(text)) )
 #0: @ = S
 #1: S = a
 #2: S = b
@@ -45,7 +45,7 @@ Test variations of specifying alternatives
 ... \t\t|k
 ... \t\t|\tl
 ... '''
->>> print format_grammar(GrammarParser().parse(text))
+>>> print( format_grammar(GrammarParser().parse(text)) )
 #0: @ = S
 #1: S = a
 #2: S = b
@@ -69,7 +69,7 @@ Test rule weight
 ... S = f(7) |g(8)|h (9)
 ... S = i (0.001)
 ... '''
->>> print format_grammar(GrammarParser().parse(text))
+>>> print( format_grammar(GrammarParser().parse(text)) )
 #0: @ = S
 #1: S = a   (2)
 #2: S = b   (3)
@@ -88,7 +88,7 @@ Test symbol parameters
 ... S = 'ccc' ' c c '
 ... S = "ddd" " d d "
 ... '''
->>> print format_grammar(GrammarParser().parse(text))
+>>> print( format_grammar(GrammarParser().parse(text)) )
 #0: @ = S
 #1: S = a<a=1,b,c=val>
 #2: S = b<a=1,b,c=val>
@@ -106,7 +106,7 @@ Test end to end
 ...     VP = verb<a=1,b> NP <a> (0.5)
 ...     NP = 'test' "one two"
 ...     '''
->>> print format_grammar(GrammarParser().parse(text))
+>>> print( format_grammar(GrammarParser().parse(text)) )
 #0: @  = S
 #1: S  = NP VP
 #2: S  = S PP
