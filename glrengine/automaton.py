@@ -106,6 +106,7 @@ class GLRAutomaton(Parser):
                 # перенос
                 stack.count_active = len(stack.active)
                 for node in (stack.active[i] for i in range(len(stack.active))):
+                for node in (list(stack.active)[i] for i in range(len(stack.active))):
                     # из стека могут удаляться состояния, так что верхний длинный for правда оказался нужен
                     state = node.data
 
@@ -173,8 +174,11 @@ class GLRAutomaton(Parser):
         return True
 
     def without_first_word(self, text, tokens):
-        new_text = text[tokens[1][2]:]
-        new_tokens = [(token[0], token[1], token[2] - tokens[1][2], token[3], token[4]) for token in tokens[1:]]
+        i = 1
+        if len(tokens) == 1:
+            return '', []
+        new_text = text[tokens[i][2]:]
+        new_tokens = [(token[0], token[1], token[2] - tokens[i][2], token[3], token[4]) for token in tokens[i:]]
         return new_text, new_tokens
 
     def validate_ast(self, ast):
@@ -182,4 +186,4 @@ class GLRAutomaton(Parser):
 
     def debug(self, *args):
         if self.debug_mode:
-            print(" ".join(map(unicode, args)))
+            print(" ".join(args))
