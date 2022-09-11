@@ -156,7 +156,7 @@ S = adj<agr-gnc=1> CLOTHES
 S = CLOTHES adj<agr-gnc=-1>
 """
 
-text = u"на вешалке висят пять красивых курток вонючая шуба"
+text = u"на вешалке висят пять красивых курток и вонючая шуба, а также пальто серое"
 
 automation = Automation(grammar, dictionaries, 'S')
 
