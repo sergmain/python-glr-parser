@@ -24,12 +24,12 @@ class Parser(object):
                     yield node, action
 
     # http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=DBFD4413CFAD29BC537FD98959E6B779?doi=10.1.1.39.1262&rep=rep1&type=pdf
-    def parse(self, reduce_by_tokens, full_math=False, reduce_validator=None):
+    def parse(self, reduce_by_tokens_params, full_math=False, reduce_validator=None):
         accepted_nodes = []
 
         current = [StackItem.start_new()] if full_math else []
 
-        for token_index, token in enumerate(reduce_by_tokens):
+        for token_index, token in enumerate(reduce_by_tokens_params):
             self.log(1, '\n\nTOKEN: %s', token)
 
             reduce_by_tokens = [token]

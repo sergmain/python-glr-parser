@@ -33,7 +33,7 @@ class GrammarParser(object):
         Rule(11, 'Symbol', ('word',), False, None, 1.0),
         Rule(12, 'Symbol', ('raw',), False, None, 1.0),
     ])
-    parser = Parser(grammar)
+    parser = Parser(grammar, 1)
 
     @staticmethod
     def _parse_labels(labels_str):

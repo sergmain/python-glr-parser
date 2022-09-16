@@ -13,8 +13,10 @@ dictionaries = {
 }
 
 grammar = u"""
-S = adj<agr-gnc=1> CLOTHES
-S = CLOTHES adj<agr-gnc=-1>
+S = r1
+S = r2
+r1 = CLOTHES adj<agr-gnc=-1>
+r2 = adj<agr-gnc=1> CLOTHES
 """
 
 text = u"на вешалке висят пять красивых курток и вонючая шуба, а также пальто серое"
