@@ -55,3 +55,19 @@ glr = GLRParser(grammar, dictionaries=dictionaries, debug=False)
 text = u"на вешалке висят пять красивых курток и красная шуба"
 for parsed in glr.parse(text):
     print("FOUND:", parsed)
+#
+
+# -------------
+grammar1 = u"""
+    S = 'Б'
+"""
+
+glr1 = GLRParser(grammar1, dictionaries=dictionaries, debug=False)
+
+text = u"на Б серое"
+parsed = glr1.parse(text)
+for parsed in parsed:
+    print("FOUND:", parsed)
+
+if not parsed:
+    print('\nNot FOUND')
