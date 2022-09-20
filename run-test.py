@@ -47,7 +47,7 @@ def test1():
     VP = v NP
     """
 
-    grammar = GrammarParser().parse(grammar, 'S')
+    grammar = GrammarParser().set_log_level(0).parse(grammar, 'S')
     print(format_grammar(grammar))
 
     states = generate_state_graph(grammar)

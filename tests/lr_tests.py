@@ -11,7 +11,7 @@ Masaru Tomita. 1987. An efficient augmented-context-free parsing algorithm. Comp
 ... PP = prep NP
 ... VP = v NP
 ... '''
->>> grammar = GrammarParser().parse(text)
+>>> grammar = GrammarParser().set_log_level(0).parse(text)
 >>> print( format_grammar(grammar) )
 #0: @  = S
 #1: S  = NP VP

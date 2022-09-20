@@ -33,7 +33,8 @@ class GrammarParser(object):
         Rule(11, 'Symbol', ('word',), False, None, 1.0),
         Rule(12, 'Symbol', ('raw',), False, None, 1.0),
     ])
-    parser = Parser(grammar, 1)
+    log_level=1
+    parser = Parser(grammar, log_level)
 
     @staticmethod
     def _parse_labels(labels_str):
@@ -46,6 +47,10 @@ class GrammarParser(object):
             else:
                 labels.setdefault(key_value, []).append(True)
         return labels
+
+    def set_log_level(self, log_level):
+        self.parser.log_level = log_level
+        return self
 
     def _scan_rules(self, grammar_str):
         syntax_trees = self.parser.parse(self.lr_grammar_tokenizer.scan(grammar_str), full_math=True)

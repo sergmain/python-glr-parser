@@ -31,7 +31,8 @@ def format_table(table, stripe=None):
 
     def print_row(i, chars, row=None):
         if stripe and i > 0 and i % 2 == 0:
-            buf.write('\033[48;5;236m')
+            # https://stackoverflow.com/a/21786287/2672202
+            buf.write('\033[0;30;47m')
         for j, cell in enumerate(row or col_widths):
             if j == 0:
                 buf.write(chars[0:2])

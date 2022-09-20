@@ -18,7 +18,7 @@ Test spacing options
 ... S = e        f
 ... S = g\t\th
 ... '''
->>> print( format_grammar(GrammarParser().parse(text)) )
+>>> print( format_grammar(GrammarParser().set_log_level(0).parse(text)) )
 #0: @ = S
 #1: S = a
 #2: S = b
