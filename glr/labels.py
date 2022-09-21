@@ -19,7 +19,7 @@ def reg_h_all_label(value, tokens, i):
 
 
 def regex_label(value, tokens, i):
-    return bool(re.match(value, tokens[i][4]))
+    return bool(False if i>len(tokens) or not tokens[i] else re.match(value, tokens[i][4]))
 
 
 def agr_gnc_label(value, tokens, i):

@@ -22,6 +22,8 @@ class Automation(object):
                 params = rule.params[i]
                 for label_key, label_values in params.items():
                     for label_value in label_values:
+                        if not token:
+                            return False
                         ok = LABELS_CHECK[label_key](label_value, tokens, i)
                         if not ok:
                             #print 'Label failed: %s=%s for #%s in %s' % (label_key, label_value, i, tokens)

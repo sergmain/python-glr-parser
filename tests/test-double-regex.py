@@ -4,8 +4,9 @@ from glr.automation import Automation
 from glr.utils import *
 
 grammar = u"""
-            S = DAY_MONTH
-            DAY_MONTH = word<regex=^([0-9][0-9])$> word<regex=^([a-z]+)$>
+        S = word<regex=^([0-9][0-9])$> Word<regex=^[а-яА-Я]+$>
+        Word = word
+        Word = noun
 """
 
 text = u"12345 12 abc 2022 987654321"
